@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">MP3 Downloader</string>
+    <string name="youtube_link">Youtube Link</string>
+    <string name="paste_your_link_here">paste your link here.</string>
+    <string name="destination_folder">Destination Folder</string>
+    <string name="info_message">Where you want to save the MP3</string>
+    <string name="download">"Download</string>
+</resources>

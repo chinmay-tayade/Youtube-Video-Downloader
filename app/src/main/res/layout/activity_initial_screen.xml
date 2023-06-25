@@ -1,0 +1,243 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/parent"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#F7F7F7"
+    tools:context=".Screens.InitialScreen">
+
+
+    <LinearLayout
+        android:id="@+id/linearLayout2"
+        android:layout_width="325dp"
+        android:layout_height="39dp"
+        android:layout_marginTop="42dp"
+        android:orientation="horizontal"
+        app:layout_constraintEnd_toEndOf="@+id/youtubeLinkTittle"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="@+id/youtubeLinkTittle"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <ImageView
+            android:id="@+id/logo"
+            android:layout_width="37dp"
+            android:layout_height="match_parent"
+            android:layout_gravity="center"
+            android:src="@drawable/logo" />
+
+        <TextView
+            android:id="@+id/tittle"
+            android:layout_width="199dp"
+            android:layout_height="37dp"
+            android:layout_marginStart="8dp"
+            android:fontFamily="@font/plussansjakarta_semibold"
+            android:paddingStart="20dp"
+            android:text=""
+            android:textAlignment="textStart"
+            android:textColor="@color/black"
+            android:textSize="20sp" />
+
+    </LinearLayout>
+
+    <RelativeLayout
+        android:clickable="true"
+        android:id="@+id/filePathView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:background="@drawable/link_background"
+        android:padding="5dp"
+        app:layout_constraintEnd_toEndOf="@+id/infoView"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="@+id/infoView"
+        app:layout_constraintTop_toBottomOf="@+id/destinationTittle">
+
+        <LinearLayout
+            android:layout_width="288dp"
+            android:layout_height="24dp"
+            android:layout_centerVertical="true"
+            android:padding="5dp">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_gravity="center"
+                android:paddingStart="5dp"
+                android:paddingLeft="2dp"
+                android:paddingEnd="5dp"
+                android:src="@drawable/folder_image" />
+
+            <TextView
+                android:id="@+id/path"
+                android:layout_width="match_parent"
+                android:layout_height="24dp"
+                android:layout_gravity="center"
+                android:textColor="@color/black"
+                android:textColorHint="@color/grey"
+                android:fontFamily="@font/plussansjakarta_semibold"
+                android:textSize="14sp"
+                android:lineSpacingExtra="2sp"
+                android:paddingLeft="5dp"
+                android:text="" />
+
+        </LinearLayout>
+    </RelativeLayout>
+
+    <LinearLayout
+        android:id="@+id/infoView"
+        android:layout_width="321dp"
+        android:layout_height="33dp"
+        android:layout_marginTop="8dp"
+        android:orientation="horizontal"
+        app:layout_constraintEnd_toEndOf="@+id/viewSwitcher"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="@+id/viewSwitcher"
+        app:layout_constraintTop_toBottomOf="@+id/filePathView">
+
+
+        <ImageView
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_gravity="center"
+            android:src="@drawable/info_image" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:textSize="12dp"
+            android:textColor="@color/grey"
+            android:paddingLeft="10dp"
+            android:fontFamily="@font/plusjakarta_medium"
+            android:text="@string/info_message" />
+
+    </LinearLayout>
+
+    <ViewSwitcher
+        android:id="@+id/viewSwitcher"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_marginTop="32dp"
+        android:clipToOutline="true"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/infoView">
+
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/button_download"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/button_image"
+            android:fontFamily="@font/plusjakarta_sans_bold"
+            android:text="Download"
+            android:enabled="true"
+            android:textAllCaps="false"
+            android:textSize="14sp"
+            android:onClick="onButtonClick"/>
+
+        <include layout="@layout/progressbutton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+        </include>
+
+    </ViewSwitcher>
+
+
+    <LinearLayout
+        android:id="@+id/linkView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="14dp"
+        android:background="@drawable/link_background"
+        android:padding="5dp"
+        app:layout_constraintEnd_toEndOf="@+id/destinationTittle"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="@+id/destinationTittle"
+        app:layout_constraintTop_toBottomOf="@+id/youtubeLinkTittle">
+
+        <LinearLayout
+            android:layout_width="290dp"
+            android:layout_height="33dp"
+            android:layout_centerVertical="true"
+            android:layout_gravity="center_vertical"
+            android:gravity="center_vertical"
+            android:padding="5dp">
+
+            <ImageView
+                android:id="@+id/pasteLink"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_gravity="center"
+                android:paddingStart="5dp"
+                android:paddingLeft="2dp"
+                android:paddingEnd="5dp"
+                android:src="@drawable/link_img" />
+
+            <EditText
+                android:clickable="true"
+                android:id="@+id/editTextLink"
+                android:inputType="textUri"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_gravity="center_vertical"
+                android:layout_toEndOf="@+id/link_img"
+                android:background="#FAFAFA"
+                android:textColorHint="@color/grey"
+                android:textSize="14sp"
+                android:textColor="@color/black"
+                android:fontFamily="@font/plussansjakarta_semibold"
+                android:lineSpacingExtra="2sp"
+                android:paddingLeft="5dp"
+                android:text="" />
+
+        </LinearLayout>
+
+        <ImageView
+            android:id="@+id/clear_text"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:layout_gravity="center_vertical"
+            android:clickable="true"
+            android:paddingRight="10dp"
+            android:src="@drawable/cross_image" />
+
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/destinationTittle"
+        android:layout_width="327dp"
+        android:layout_height="26dp"
+        android:layout_marginTop="24dp"
+        android:textColor="@color/black"
+        android:fontFamily="@font/plussansjakarta_semibold"
+        android:text="@string/destination_folder"
+        android:textSize="14sp"
+        app:layout_constraintEnd_toEndOf="@+id/filePathView"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="@+id/filePathView"
+        app:layout_constraintTop_toBottomOf="@+id/linkView" />
+
+    <TextView
+        android:id="@+id/youtubeLinkTittle"
+        android:layout_width="327dp"
+        android:layout_height="26dp"
+        android:layout_marginTop="13dp"
+        android:fontFamily="@font/plussansjakarta_semibold"
+        android:text="@string/youtube_link"
+        android:textSize="14sp"
+        android:textColor="@color/black"
+        app:layout_constraintEnd_toEndOf="@+id/linkView"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="@+id/linkView"
+        app:layout_constraintTop_toBottomOf="@+id/linearLayout2" />
+
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>

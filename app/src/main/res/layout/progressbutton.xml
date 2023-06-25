@@ -1,0 +1,36 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="horizontal"
+    android:gravity="center"
+    android:background="@drawable/loading_button">
+
+    <com.airbnb.lottie.LottieAnimationView
+        app:lottie_autoPlay="true"
+        app:lottie_rawRes="@raw/spinner"
+        android:keepScreenOn="true"
+        android:layout_width="44dp"
+        android:layout_height="44dp">
+
+    </com.airbnb.lottie.LottieAnimationView>
+
+    <TextView
+        android:paddingLeft="10dp"
+        android:layout_width="115dp"
+        android:height="20dp"
+        android:text="Grabbing Info"
+        android:textSize="14sp"
+        android:fontFamily="@font/plussansjakarta_semibold"
+        android:layout_gravity="center"
+        android:gravity="center_vertical"
+        android:layout_height="match_parent">
+
+    </TextView>
+
+
+    <!-- Frame 31 -->
+
+
+
+</LinearLayout>
