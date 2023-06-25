@@ -2,6 +2,7 @@ package com.chinmay.tayade.mp3downloader.Screens
 
 import android.content.ClipboardManager
 import android.content.Context
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -19,18 +20,29 @@ import com.chinmay.tayade.mp3downloader.R
 import com.chinmay.tayade.mp3downloader.R.layout.activity_initial_screen
 import com.chinmay.tayade.mp3downloader.Utility.UtilityFunction
 import java.io.File
+import android.Manifest
+import android.app.PendingIntent
+import android.content.Intent
+import android.os.storage.StorageManager
+import android.provider.Settings
+import androidx.appcompat.app.AlertDialog
+
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+
 
 
 class InitialScreen : AppCompatActivity() {
 
 
-    private var documentTreeUri: Uri? = null
+    private var documentTreeUri: String = ""
     private lateinit var buttonDownload: AppCompatButton
     private lateinit var filePathView: RelativeLayout
     private lateinit var clearText: ImageView
     private lateinit var editTextLink: EditText
     private lateinit var idPasteLink: ImageView
    private  lateinit var pathView: TextView
+    val PERMISSION_REQUEST_CODE = 1001
 
     @RequiresApi(Build.VERSION_CODES.R)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -47,6 +59,7 @@ class InitialScreen : AppCompatActivity() {
 
         val downloadDir: File? = getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
         val downloadPath: String = downloadDir!!.absolutePath
+        checkReadWritePermission()
 
 
         buttonDownload = findViewById(R.id.button_download)
@@ -64,7 +77,7 @@ class InitialScreen : AppCompatActivity() {
 
 
         filePathView.setOnClickListener {
-            openDocumentTreeLauncher.launch(null)
+            folderPickerLauncher.launch(null)
         }
 
         clearText.setOnClickListener {
@@ -110,7 +123,6 @@ class InitialScreen : AppCompatActivity() {
                Toast.makeText(this,"please enter a url",Toast.LENGTH_SHORT).show()
            }
        }else{
-
            if(UtilityFunction().isUrl(editTextLink.text.toString())){
                pathView.setTextColor(resources.getColor(R.color.grey_text_loading))
                editTextLink.setTextColor(resources.getColor(R.color.grey_text_loading))
@@ -128,21 +140,49 @@ class InitialScreen : AppCompatActivity() {
            }
        }
 
-
-
-
     }
 
-    private val openDocumentTreeLauncher =
-        registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
-            if (uri != null) {
-                documentTreeUri = uri
-                Log.e("DocumentTree", uri.toString())
 
-                pathView.text = uri.toString().substringAfterLast('/')
-                    .replace("%3A", ":")
-            }
+    private val READ_WRITE_PERMISSION_REQUEST_CODE = 1
+
+    @RequiresApi(Build.VERSION_CODES.R)
+    fun checkReadWritePermission() {
+        if (Environment.isExternalStorageManager()) {
+            // Permission already granted
+            // Perform your logic here
+        } else {
+            // Permission not granted, request it
+            val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION)
+            val uri = Uri.fromParts("package", packageName, null)
+            intent.data = uri
+            startActivityForResult(intent, READ_WRITE_PERMISSION_REQUEST_CODE)
         }
+    }
+
+
+
+    private val folderPickerLauncher = registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
+        if (uri != null) {
+            // Folder selected
+            val folderPath = uri.path ?: ""
+          //  documentTreeUri = uri
+           // Log.e("DocumentTree", uri.toString())
+
+            val directory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+            val path = directory.absolutePath
+
+            documentTreeUri = path
+            Log.e("path :",path)
+
+
+            pathView.text = path.toString().substringAfterLast('/')
+                .replace("%3A", ":")
+        } else {
+
+            Toast.makeText(this,"select a destination",Toast.LENGTH_LONG).show()
+        }
+    }
+
 
 
 }
