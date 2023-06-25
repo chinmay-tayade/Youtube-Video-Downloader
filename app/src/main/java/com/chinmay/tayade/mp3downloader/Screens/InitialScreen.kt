@@ -2,31 +2,26 @@ package com.chinmay.tayade.mp3downloader.Screens
 
 import android.content.ClipboardManager
 import android.content.Context
-import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.os.Environment.isExternalStorageManager
-import android.provider.Settings
+import android.os.Environment
 import android.util.Log
 import android.widget.*
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.AppCompatButton
+import com.chaquo.python.PyObject
+import com.chaquo.python.Python
+import com.chaquo.python.android.AndroidPlatform
 import com.chinmay.tayade.mp3downloader.R
 import com.chinmay.tayade.mp3downloader.R.layout.activity_initial_screen
 import com.chinmay.tayade.mp3downloader.Utility.UtilityFunction
+import java.io.File
 
 
 class InitialScreen : AppCompatActivity() {
-
-
-    companion object {
-
-        var REQUEST_CODE_DESTINATION: Int = 1001
-    }
-
 
 
     private var documentTreeUri: Uri? = null
@@ -42,8 +37,17 @@ class InitialScreen : AppCompatActivity() {
 
 
         super.onCreate(savedInstanceState)
-
         setContentView(activity_initial_screen)
+        if (! Python.isStarted()) {
+            Python.start(AndroidPlatform(this))
+        }
+
+        val py = Python.getInstance()
+        val module = py.getModule("video_downloader")
+
+        val downloadDir: File? = getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
+        val downloadPath: String = downloadDir!!.absolutePath
+
 
         buttonDownload = findViewById(R.id.button_download)
         filePathView = findViewById(R.id.filePathView)
@@ -73,7 +77,7 @@ class InitialScreen : AppCompatActivity() {
 
         buttonDownload.setOnClickListener {
 
-            onButtonClick()
+            onButtonClick(module)
 
         }
 
@@ -94,7 +98,7 @@ class InitialScreen : AppCompatActivity() {
         }
     }
 
-    fun onButtonClick() {
+    fun onButtonClick(module: PyObject) {
 
        if(documentTreeUri.toString().isNullOrEmpty()||editTextLink.text.isNullOrBlank()||documentTreeUri.toString()=="null"||documentTreeUri.toString()==""){
 
@@ -112,9 +116,12 @@ class InitialScreen : AppCompatActivity() {
                editTextLink.setTextColor(resources.getColor(R.color.grey_text_loading))
                var viewSwitcher: ViewSwitcher = findViewById(R.id.viewSwitcher)
                viewSwitcher.showNext()
-           //   if(UtilityFunction().copyYtDlpExecutableToInternalStorage(this)){
-                  UtilityFunction().downloadVideo(this,editTextLink.text.toString(),documentTreeUri!!)
-           //   }
+
+                 // UtilityFunction().downloadVideo(this,editTextLink.text.toString(),documentTreeUri!!)
+
+               val pyFunc = module.callAttr("download_video",
+                   editTextLink.text.toString(),documentTreeUri.toString())
+
            }else{
 
                Toast.makeText(this,"malformed url",Toast.LENGTH_SHORT).show()
