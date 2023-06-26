@@ -14,4 +14,27 @@
         <!-- Customize your theme here. -->
     </style>
 
+    <!-- styles.xml -->
+    <style name="youtube_tittle_style">
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">#1A0D0D</item>
+    </style>
+
+    <style name="downloading">
+        <item name="android:textSize">12sp</item>
+        <item name="android:textColor">#1A0D0D</item>
+    </style>
+
+
+    <style name="mb_4_25mb">
+        <item name="android:textSize">12sp</item>
+        <item name="android:textColor">#858181</item>
+    </style>
+
+
+    <!-- styles.xml -->
+    <style name="b_views">
+        <item name="android:textSize">12sp</item>
+        <item name="android:textColor">#858181</item>
+    </style>
 </resources>

@@ -13,41 +13,44 @@
         android:id="@+id/linearLayout2"
         android:layout_width="325dp"
         android:layout_height="39dp"
+        android:layout_marginStart="45dp"
         android:layout_marginTop="42dp"
+        android:layout_marginEnd="41dp"
         android:orientation="horizontal"
-        app:layout_constraintEnd_toEndOf="@+id/youtubeLinkTittle"
-        app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toStartOf="@+id/youtubeLinkTittle"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
         <ImageView
             android:id="@+id/logo"
             android:layout_width="37dp"
             android:layout_height="match_parent"
-            android:layout_gravity="center"
+            android:layout_alignParentStart="true"
+            android:layout_centerVertical="true"
             android:src="@drawable/logo" />
 
         <TextView
             android:id="@+id/tittle"
             android:layout_width="199dp"
             android:layout_height="37dp"
-            android:layout_marginStart="8dp"
+            android:layout_centerVertical="true"
+            android:layout_toEndOf="@id/logo"
             android:fontFamily="@font/plussansjakarta_semibold"
             android:paddingStart="20dp"
-            android:text=""
+            android:text="MP3 Downloader"
             android:textAlignment="textStart"
             android:textColor="@color/black"
             android:textSize="20sp" />
-
     </LinearLayout>
 
+
     <RelativeLayout
-        android:clickable="true"
         android:id="@+id/filePathView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp"
         android:background="@drawable/link_background"
+        android:clickable="true"
         android:padding="5dp"
         app:layout_constraintEnd_toEndOf="@+id/infoView"
         app:layout_constraintHorizontal_bias="0.5"
@@ -74,13 +77,13 @@
                 android:layout_width="match_parent"
                 android:layout_height="24dp"
                 android:layout_gravity="center"
-                android:textColor="@color/black"
-                android:textColorHint="@color/grey"
                 android:fontFamily="@font/plussansjakarta_semibold"
-                android:textSize="14sp"
                 android:lineSpacingExtra="2sp"
                 android:paddingLeft="5dp"
-                android:text="" />
+                android:text=""
+                android:textColor="@color/black"
+                android:textColorHint="@color/grey"
+                android:textSize="14sp" />
 
         </LinearLayout>
     </RelativeLayout>
@@ -107,15 +110,15 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical"
-            android:textSize="12dp"
-            android:textColor="@color/grey"
-            android:paddingLeft="10dp"
             android:fontFamily="@font/plusjakarta_medium"
-            android:text="@string/info_message" />
+            android:paddingLeft="10dp"
+            android:text="@string/info_message"
+            android:textColor="@color/grey"
+            android:textSize="12dp" />
 
     </LinearLayout>
 
-    <ViewSwitcher
+    <LinearLayout
         android:id="@+id/viewSwitcher"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -133,19 +136,21 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:background="@drawable/button_image"
-            android:fontFamily="@font/plusjakarta_sans_bold"
-            android:text="Download"
             android:enabled="true"
+            android:fontFamily="@font/plusjakarta_sans_bold"
+            android:onClick="onButtonClick"
+            android:text="Download"
             android:textAllCaps="false"
             android:textSize="14sp"
-            android:onClick="onButtonClick"/>
+            android:visibility="visible" />
 
-        <include layout="@layout/progressbutton"
+        <include
+            layout="@layout/progressbutton"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content">
-        </include>
+            android:layout_height="wrap_content"
+            android:visibility="gone"></include>
 
-    </ViewSwitcher>
+    </LinearLayout>
 
 
     <LinearLayout
@@ -179,21 +184,21 @@
                 android:src="@drawable/link_img" />
 
             <EditText
-                android:clickable="true"
                 android:id="@+id/editTextLink"
-                android:inputType="textUri"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_gravity="center_vertical"
                 android:layout_toEndOf="@+id/link_img"
                 android:background="#FAFAFA"
-                android:textColorHint="@color/grey"
-                android:textSize="14sp"
-                android:textColor="@color/black"
+                android:clickable="true"
                 android:fontFamily="@font/plussansjakarta_semibold"
+                android:inputType="textUri"
                 android:lineSpacingExtra="2sp"
                 android:paddingLeft="5dp"
-                android:text="" />
+                android:text=""
+                android:textColor="@color/black"
+                android:textColorHint="@color/grey"
+                android:textSize="14sp" />
 
         </LinearLayout>
 
@@ -215,9 +220,9 @@
         android:layout_width="327dp"
         android:layout_height="26dp"
         android:layout_marginTop="24dp"
-        android:textColor="@color/black"
         android:fontFamily="@font/plussansjakarta_semibold"
         android:text="@string/destination_folder"
+        android:textColor="@color/black"
         android:textSize="14sp"
         app:layout_constraintEnd_toEndOf="@+id/filePathView"
         app:layout_constraintHorizontal_bias="0.5"
@@ -231,13 +236,12 @@
         android:layout_marginTop="13dp"
         android:fontFamily="@font/plussansjakarta_semibold"
         android:text="@string/youtube_link"
-        android:textSize="14sp"
         android:textColor="@color/black"
+        android:textSize="14sp"
         app:layout_constraintEnd_toEndOf="@+id/linkView"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="@+id/linkView"
         app:layout_constraintTop_toBottomOf="@+id/linearLayout2" />
-
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

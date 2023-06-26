@@ -2,12 +2,15 @@ package com.chinmay.tayade.mp3downloader.Screens
 
 import android.content.ClipboardManager
 import android.content.Context
-import android.content.pm.PackageManager
+import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
+import android.os.Handler
+import android.provider.Settings
 import android.util.Log
+import android.view.View
 import android.widget.*
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
@@ -20,16 +23,6 @@ import com.chinmay.tayade.mp3downloader.R
 import com.chinmay.tayade.mp3downloader.R.layout.activity_initial_screen
 import com.chinmay.tayade.mp3downloader.Utility.UtilityFunction
 import java.io.File
-import android.Manifest
-import android.app.PendingIntent
-import android.content.Intent
-import android.os.storage.StorageManager
-import android.provider.Settings
-import androidx.appcompat.app.AlertDialog
-
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
-
 
 
 class InitialScreen : AppCompatActivity() {
@@ -42,10 +35,10 @@ class InitialScreen : AppCompatActivity() {
     private lateinit var editTextLink: EditText
     private lateinit var idPasteLink: ImageView
    private  lateinit var pathView: TextView
-    val PERMISSION_REQUEST_CODE = 1001
-
+   private  lateinit var progressButton: LinearLayout
     @RequiresApi(Build.VERSION_CODES.R)
     override fun onCreate(savedInstanceState: Bundle?) {
+
 
 
         super.onCreate(savedInstanceState)
@@ -68,6 +61,8 @@ class InitialScreen : AppCompatActivity() {
         editTextLink = findViewById(R.id.editTextLink)
         idPasteLink = findViewById(R.id.pasteLink)
         pathView= findViewById(R.id.path)
+        progressButton = findViewById(R.id.progressbutton)
+
 
 
         idPasteLink.setOnClickListener {
@@ -90,7 +85,7 @@ class InitialScreen : AppCompatActivity() {
 
         buttonDownload.setOnClickListener {
 
-            onButtonClick(module)
+            onButtonClick()
 
         }
 
@@ -111,7 +106,7 @@ class InitialScreen : AppCompatActivity() {
         }
     }
 
-    fun onButtonClick(module: PyObject) {
+    fun onButtonClick() {
 
        if(documentTreeUri.toString().isNullOrEmpty()||editTextLink.text.isNullOrBlank()||documentTreeUri.toString()=="null"||documentTreeUri.toString()==""){
 
@@ -124,15 +119,23 @@ class InitialScreen : AppCompatActivity() {
            }
        }else{
            if(UtilityFunction().isUrl(editTextLink.text.toString())){
+
                pathView.setTextColor(resources.getColor(R.color.grey_text_loading))
                editTextLink.setTextColor(resources.getColor(R.color.grey_text_loading))
-               var viewSwitcher: ViewSwitcher = findViewById(R.id.viewSwitcher)
-               viewSwitcher.showNext()
 
-                 // UtilityFunction().downloadVideo(this,editTextLink.text.toString(),documentTreeUri!!)
+               buttonDownload.visibility = View.GONE
+               progressButton.visibility = View.VISIBLE
 
-               val pyFunc = module.callAttr("download_video",
-                   editTextLink.text.toString(),documentTreeUri.toString())
+               var link = editTextLink.text.toString()
+
+               val handler = Handler()
+               handler.postDelayed(Runnable {
+                   var downloadIntent = Intent(this,DownloadingScreen::class.java)
+               downloadIntent.putExtra("youtube_link" ,link)
+               downloadIntent.putExtra("location_uri" ,documentTreeUri)
+                   startActivity(downloadIntent)
+                   this.finish()
+               }, 5000)
 
            }else{
 
@@ -169,7 +172,7 @@ class InitialScreen : AppCompatActivity() {
            // Log.e("DocumentTree", uri.toString())
 
             val directory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-            val path = directory.absolutePath
+             val path = directory.absolutePath
 
             documentTreeUri = path
             Log.e("path :",path)
@@ -182,6 +185,7 @@ class InitialScreen : AppCompatActivity() {
             Toast.makeText(this,"select a destination",Toast.LENGTH_LONG).show()
         }
     }
+
 
 
 

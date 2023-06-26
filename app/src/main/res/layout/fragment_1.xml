@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/changing_frame"
+    android:layout_width="318dp"
+    android:layout_height="53dp"
+    android:layout_alignParentLeft="true"
+    android:layout_alignParentTop="true"
+    android:layout_marginStart="45dp"
+    android:layout_marginTop="22dp"
+    android:layout_marginEnd="46dp"
+    android:clipToOutline="true">
+
+        <TextView
+            android:id="@+id/message_status"
+            android:layout_width="87dp"
+            android:layout_height="16dp"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentTop="true"
+            android:layout_marginTop="8dp"
+            android:gravity="center_vertical"
+            android:lineSpacingExtra="1sp"
+            android:text="Downloding ...."
+            android:textAppearance="@style/downloading" />
+
+        <TextView
+            android:id="@+id/percentage_status"
+            android:layout_width="100dp"
+            android:layout_height="16dp"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentTop="true"
+            android:layout_marginLeft="220dp"
+            android:layout_marginTop="8dp"
+            android:gravity="left|center_vertical"
+            android:lineSpacingExtra="1sp"
+            android:text="25/100mb"
+            android:textAppearance="@style/mb_4_25mb" />
+
+
+        <LinearLayout
+            android:id="@+id/rectangle_1"
+            android:layout_width="320dp"
+            android:orientation="horizontal"
+            android:layout_height="7dp"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentTop="true"
+            android:layout_marginTop="36dp" />
+    </FrameLayout>

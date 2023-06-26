@@ -8,237 +8,168 @@
     tools:context=".Screens.DownloadingScreen">
 
 
-
-    <LinearLayout
+    <RelativeLayout
         android:id="@+id/linearLayout2"
         android:layout_width="325dp"
         android:layout_height="39dp"
+        android:layout_marginStart="45dp"
         android:layout_marginTop="42dp"
+        android:layout_marginEnd="42dp"
         android:orientation="horizontal"
-        app:layout_constraintEnd_toEndOf="@+id/youtubeLinkTittle"
-        app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toStartOf="@+id/youtubeLinkTittle"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
         <ImageView
             android:id="@+id/logo"
             android:layout_width="37dp"
             android:layout_height="match_parent"
-            android:layout_gravity="center"
+            android:layout_alignParentStart="true"
+            android:layout_centerVertical="true"
             android:src="@drawable/logo" />
 
         <TextView
             android:id="@+id/tittle"
             android:layout_width="199dp"
             android:layout_height="37dp"
-            android:layout_marginStart="8dp"
+            android:layout_centerVertical="true"
+            android:layout_toEndOf="@id/logo"
             android:fontFamily="@font/plussansjakarta_semibold"
             android:paddingStart="20dp"
-            android:text=""
+            android:text="MP3 Downloader"
             android:textAlignment="textStart"
             android:textColor="@color/black"
             android:textSize="20sp" />
-
-    </LinearLayout>
-
-    <RelativeLayout
-        android:clickable="true"
-        android:id="@+id/filePathView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        android:background="@drawable/link_background"
-        android:padding="5dp"
-        app:layout_constraintEnd_toEndOf="@+id/infoView"
-        app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toStartOf="@+id/infoView"
-        app:layout_constraintTop_toBottomOf="@+id/destinationTittle">
-
-        <LinearLayout
-            android:layout_width="288dp"
-            android:layout_height="24dp"
-            android:layout_centerVertical="true"
-            android:padding="5dp">
-
-            <ImageView
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:layout_gravity="center"
-                android:paddingStart="5dp"
-                android:paddingLeft="2dp"
-                android:paddingEnd="5dp"
-                android:src="@drawable/folder_image" />
-
-            <TextView
-                android:id="@+id/path"
-                android:layout_width="match_parent"
-                android:layout_height="24dp"
-                android:layout_gravity="center"
-                android:textColor="@color/black"
-                android:textColorHint="@color/grey"
-                android:fontFamily="@font/plussansjakarta_semibold"
-                android:textSize="14sp"
-                android:lineSpacingExtra="2sp"
-                android:paddingLeft="5dp"
-                android:text="" />
-
-        </LinearLayout>
     </RelativeLayout>
 
-    <LinearLayout
-        android:id="@+id/infoView"
-        android:layout_width="321dp"
-        android:layout_height="33dp"
-        android:layout_marginTop="8dp"
-        android:orientation="horizontal"
-        app:layout_constraintEnd_toEndOf="@+id/viewSwitcher"
-        app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toStartOf="@+id/viewSwitcher"
-        app:layout_constraintTop_toBottomOf="@+id/filePathView">
 
-
-        <ImageView
-            android:layout_width="20dp"
-            android:layout_height="20dp"
-            android:layout_gravity="center"
-            android:src="@drawable/info_image" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_vertical"
-            android:textSize="12dp"
-            android:textColor="@color/grey"
-            android:paddingLeft="10dp"
-            android:fontFamily="@font/plusjakarta_medium"
-            android:text="@string/info_message" />
-
-    </LinearLayout>
-
-    <ViewSwitcher
-        android:id="@+id/viewSwitcher"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+    <RelativeLayout
+        android:id="@+id/frame_22"
+        android:layout_width="320dp"
+        android:layout_height="288dp"
+        android:layout_alignParentLeft="true"
         android:layout_alignParentTop="true"
-        android:layout_marginTop="32dp"
-        android:clipToOutline="true"
+        android:layout_marginStart="45dp"
+        android:layout_marginTop="25dp"
+        android:layout_marginEnd="46dp"
+        android:background="@drawable/frame1"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/infoView">
-
-
-        <androidx.appcompat.widget.AppCompatButton
-            android:id="@+id/button_download"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="@drawable/button_image"
-            android:fontFamily="@font/plusjakarta_sans_bold"
-            android:text="Download"
-            android:enabled="true"
-            android:textAllCaps="false"
-            android:textSize="14sp"
-            android:onClick="onButtonClick"/>
-
-        <include layout="@layout/progressbutton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content">
-        </include>
-
-    </ViewSwitcher>
-
-
-    <LinearLayout
-        android:id="@+id/linkView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="14dp"
-        android:background="@drawable/link_background"
-        android:padding="5dp"
-        app:layout_constraintEnd_toEndOf="@+id/destinationTittle"
-        app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toStartOf="@+id/destinationTittle"
-        app:layout_constraintTop_toBottomOf="@+id/youtubeLinkTittle">
-
-        <LinearLayout
-            android:layout_width="290dp"
-            android:layout_height="33dp"
-            android:layout_centerVertical="true"
-            android:layout_gravity="center_vertical"
-            android:gravity="center_vertical"
-            android:padding="5dp">
+        app:layout_constraintTop_toBottomOf="@+id/linearLayout2">
 
             <ImageView
-                android:id="@+id/pasteLink"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:layout_gravity="center"
-                android:paddingStart="5dp"
-                android:paddingLeft="2dp"
-                android:paddingEnd="5dp"
-                android:src="@drawable/link_img" />
+                android:id="@+id/thumbnail"
+                android:layout_width="292dp"
+                android:layout_height="164dp"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentTop="true"
+                android:layout_marginLeft="13dp"
+                android:layout_marginTop="15dp"
+                android:background="@drawable/youtubeplayer"
+                android:clipToOutline="true" />
 
-            <EditText
-                android:clickable="true"
-                android:id="@+id/editTextLink"
-                android:inputType="textUri"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_gravity="center_vertical"
-                android:layout_toEndOf="@+id/link_img"
-                android:background="#FAFAFA"
-                android:textColorHint="@color/grey"
-                android:textSize="14sp"
-                android:textColor="@color/black"
-                android:fontFamily="@font/plussansjakarta_semibold"
-                android:lineSpacingExtra="2sp"
-                android:paddingLeft="5dp"
-                android:text="" />
+        <TextView
+            android:id="@+id/name_of_video"
+            android:layout_width="300dp"
+            android:layout_height="48dp"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentTop="true"
+            android:layout_marginLeft="14dp"
+            android:layout_marginTop="192dp"
+            android:gravity="top"
+            android:lineSpacingExtra="4sp"
+            android:text=""
+            android:textAppearance="@style/youtube_tittle_style"
+            android:translationY="-2.18sp" />
 
-        </LinearLayout>
+        <RelativeLayout
+            android:id="@+id/group_6"
+            android:layout_width="94dp"
+            android:layout_height="16dp"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentTop="true"
+            android:layout_marginLeft="14dp"
+            android:layout_marginTop="256dp">
 
-        <ImageView
-            android:id="@+id/clear_text"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:layout_alignParentEnd="true"
-            android:layout_centerVertical="true"
-            android:layout_gravity="center_vertical"
-            android:clickable="true"
-            android:paddingRight="10dp"
-            android:src="@drawable/cross_image" />
+            <ImageView
+                xmlns:android="http://schemas.android.com/apk/res/android"
+                android:id="@+id/frame_20"
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:clipToOutline="true"
+                android:background="@drawable/eye"
+                />
 
-    </LinearLayout>
-
-    <TextView
-        android:id="@+id/destinationTittle"
-        android:layout_width="327dp"
-        android:layout_height="26dp"
-        android:layout_marginTop="24dp"
-        android:textColor="@color/black"
-        android:fontFamily="@font/plussansjakarta_semibold"
-        android:text="@string/destination_folder"
-        android:textSize="14sp"
-        app:layout_constraintEnd_toEndOf="@+id/filePathView"
-        app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toStartOf="@+id/filePathView"
-        app:layout_constraintTop_toBottomOf="@+id/linkView" />
-
-    <TextView
-        android:id="@+id/youtubeLinkTittle"
-        android:layout_width="327dp"
-        android:layout_height="26dp"
-        android:layout_marginTop="13dp"
-        android:fontFamily="@font/plussansjakarta_semibold"
-        android:text="@string/youtube_link"
-        android:textSize="14sp"
-        android:textColor="@color/black"
-        app:layout_constraintEnd_toEndOf="@+id/linkView"
-        app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toStartOf="@+id/linkView"
-        app:layout_constraintTop_toBottomOf="@+id/linearLayout2" />
+            <TextView
+                android:id="@+id/view_counts"
+                android:layout_width="70dp"
+                android:layout_height="16dp"
+                android:layout_alignParentLeft="true"
+                android:layout_marginLeft="20dp"
+                android:layout_alignParentTop="true"
+                android:text="Views"
+                android:textAppearance="@style/b_views"
+                android:lineSpacingExtra="1sp"
+                android:gravity="center_vertical"
+                />
 
 
+        </RelativeLayout>
+
+        <!-- Group 7 -->
+        <RelativeLayout
+            android:id="@+id/group_7"
+            android:layout_width="89dp"
+            android:layout_height="16dp"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentTop="true"
+            android:layout_marginLeft="140dp"
+            android:layout_marginTop="256dp"
+            android:background="#00000000" >
+
+
+            <ImageView
+                xmlns:android="http://schemas.android.com/apk/res/android"
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentTop="true"
+                android:clipToOutline="true"
+                android:background="@drawable/likes"
+                />
+            <TextView
+                android:id="@+id/like_counts"
+                android:layout_width="65dp"
+                android:layout_height="16dp"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentTop="true"
+                android:text="Likes"
+                android:layout_marginLeft="20dp"
+                android:textAppearance="@style/b_views"
+                android:lineSpacingExtra="1sp"
+                android:gravity="center_vertical"
+                />
+
+
+
+        </RelativeLayout>
+    </RelativeLayout>
+
+    <FrameLayout
+        android:id="@+id/changing_frame"
+        android:layout_width="318dp"
+        android:layout_height="53dp"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginStart="45dp"
+        android:layout_marginTop="22dp"
+        android:layout_marginEnd="46dp"
+        android:clipToOutline="true"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/frame_22">
+
+    </FrameLayout>
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

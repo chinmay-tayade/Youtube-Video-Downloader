@@ -5,4 +5,7 @@
     <string name="destination_folder">Destination Folder</string>
     <string name="info_message">Where you want to save the MP3</string>
     <string name="download">"Download</string>
+    <string name="API_KEY_YOUTUBE">AIzaSyBltl3Ckl7iiG8T2C7H-5iA-Sjzu0wx5EI</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>

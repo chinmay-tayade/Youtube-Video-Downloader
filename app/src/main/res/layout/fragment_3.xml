@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="320dp"
+    android:layout_height="43dp"
+    android:background="#F7F7F7"
+    android:layout_alignParentLeft="true"
+    android:layout_alignParentTop="true"
+    android:layout_marginStart="45dp"
+    android:layout_marginTop="22dp"
+    android:layout_marginEnd="46dp"
+    android:clipToOutline="true"
+    tools:context=".Fragments.Fragment3">
+
+    <TextView
+        android:id="@+id/message_status"
+        android:layout_width="87dp"
+        android:layout_height="16dp"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginTop="8dp"
+        android:gravity="center_vertical"
+        android:lineSpacingExtra="1sp"
+        android:text="Saving..."
+        android:textAppearance="@style/downloading" />
+
+    <TextView
+        android:id="@+id/percentage_status"
+        android:layout_width="100dp"
+        android:layout_height="16dp"
+
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginLeft="220dp"
+        android:layout_marginTop="8dp"
+        android:gravity="left|center_vertical"
+        android:lineSpacingExtra="1sp"
+        android:text="25/100mb"
+        android:textAppearance="@style/mb_4_25mb" />
+
+
+    <androidx.core.widget.ContentLoadingProgressBar
+        android:id="@+id/rectangle_1"
+        android:layout_width="320dp"
+        android:layout_height="7dp"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginTop="36dp" />
+
+
+</FrameLayout>

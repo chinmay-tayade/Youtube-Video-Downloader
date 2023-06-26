@@ -1,0 +1,77 @@
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="320dp"
+    android:layout_height="wrap_content"
+    android:background="#F7F7F7"
+    android:layout_alignParentLeft="true"
+    android:layout_alignParentTop="true"
+    android:layout_marginStart="45dp"
+    android:layout_marginTop="22dp"
+    android:layout_marginEnd="46dp"
+    android:clipToOutline="true"
+    tools:context=".Fragments.Fragment3">
+
+    <TextView
+        android:id="@+id/message_status"
+        android:layout_width="85dp"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginTop="8dp"
+        android:gravity="center_vertical"
+        android:lineSpacingExtra="1sp"
+        android:text="Failed..."
+        android:textAppearance="@style/downloading" />
+
+    <RelativeLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/frame_27"
+        android:layout_width="16dp"
+        android:layout_height="16dp"
+        android:layout_alignParentLeft="true"
+        android:layout_marginLeft="304dp"
+        android:layout_alignParentTop="true"
+        android:layout_marginTop="8dp"
+        android:clipToOutline="true"
+        android:background="@drawable/redcross"
+        />
+
+    <View
+        android:id="@+id/rectangle_1"
+        android:layout_width="320dp"
+        android:layout_height="7dp"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginTop="36dp"
+        android:background="@drawable/red_rctangle"
+        />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="65dp"
+        android:layout_gravity="bottom"
+        android:gravity="bottom">
+
+        <ImageView
+            android:id="@+id/frame_18"
+            android:layout_width="19dp"
+            android:layout_height="18dp"
+            android:layout_marginLeft="5dp"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/info_image"
+            android:clipToOutline="true" />
+
+        <TextView
+            android:id="@+id/mp3_success"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="10dp"
+            android:fontFamily="@font/plusjakarta_medium"
+            android:gravity="start"
+            android:lineSpacingExtra="5sp"
+            android:text="Please check your internet connection"
+            android:textAppearance="@style/Theme.Material3.Dark"
+            android:textColor="@color/grey"
+            android:textSize="12dp" />
+    </LinearLayout>
+</FrameLayout>
