@@ -1,24 +1,18 @@
 @file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 
-package com.chinmay.tayade.mp3downloader.Screens
+package com.chinmay.tayade.mp3downloader.ui.screens
 
 import android.Manifest
-import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
-import android.os.Bundle
-import android.os.Environment
 import android.provider.Settings
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -40,6 +34,7 @@ import androidx.compose.material.icons.filled.ContentPaste
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -54,109 +49,119 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.core.content.ContextCompat
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.chinmay.tayade.mp3downloader.R
-import com.chinmay.tayade.mp3downloader.ui.theme.Mp3DownloaderTheme
+import com.chinmay.tayade.mp3downloader.ui.components.AppTopBar
+import com.chinmay.tayade.mp3downloader.ui.components.SectionLabel
+import com.chinmay.tayade.mp3downloader.util.StoragePaths
+import com.chinmay.tayade.mp3downloader.util.hasNotificationPermission
 import com.chinmay.tayade.mp3downloader.util.isWebUrl
+import com.chinmay.tayade.mp3downloader.util.rememberResumeAwareFlag
+import com.chinmay.tayade.mp3downloader.util.hasStorageAccess
+import com.chinmay.tayade.mp3downloader.viewmodel.HomeViewModel
 import kotlinx.coroutines.launch
-import java.io.File
-
-class InitialScreen : ComponentActivity() {
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContent {
-            Mp3DownloaderTheme {
-                InitialRoute(
-                    onStartDownload = { link, destination ->
-                        startActivity(
-                            Intent(this, DownloadingScreen::class.java).apply {
-                                putExtra("youtube_link", link)
-                                putExtra("location_uri", destination)
-                            }
-                        )
-                    }
-                )
-            }
-        }
-    }
-}
 
 @Composable
-private fun InitialRoute(onStartDownload: (link: String, destination: String) -> Unit) {
+fun HomeScreen(
+    initialUrl: String?,
+    onFetch: (String) -> Unit,
+    onOpenDownloads: () -> Unit,
+    onOpenSettings: () -> Unit,
+    viewModel: HomeViewModel = viewModel(),
+) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val snackbar = remember { SnackbarHostState() }
-
     fun toast(message: String) = scope.launch { snackbar.showSnackbar(message) }
 
-    var link by remember { mutableStateOf("") }
-    var destination by remember { mutableStateOf("") }
-    val hasStorageAccess = rememberStorageAccess()
+    val settings by viewModel.settings.collectAsStateWithLifecycle()
+    var link by rememberSaveable { mutableStateOf(initialUrl.orEmpty()) }
 
-    val folderPicker = rememberLauncherForActivityResult(
-        ActivityResultContracts.OpenDocumentTree()
-    ) { uri: Uri? ->
-        // yt-dlp writes through a plain filesystem path, so we always target the
-        // public Downloads directory regardless of the tree that was picked.
-        if (uri != null) {
-            destination = Environment
-                .getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-                ?.absolutePath ?: fallbackDownloadDir(context)
-        } else {
-            toast("Select a destination folder")
+    LaunchedEffect(initialUrl) {
+        if (!initialUrl.isNullOrBlank() && link.isBlank()) link = initialUrl
+    }
+
+    val hasStorage = rememberResumeAwareFlag { hasStorageAccess(it) }
+    val notificationPermission = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+    ) { }
+    LaunchedEffect(Unit) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !hasNotificationPermission(context)) {
+            notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
         }
     }
 
-    val legacyPermission = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { granted -> hasStorageAccess.value = granted }
+    val legacyStorage = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+    ) { granted -> hasStorage.value = granted }
 
-    fun requestStorageAccess() {
+    val folderPicker = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocumentTree(),
+    ) { uri: Uri? ->
+        val resolved = StoragePaths.treeUriToPath(uri)
+        when {
+            uri == null -> toast(context.getString(R.string.pick_a_folder))
+            resolved != null && StoragePaths.isWritable(resolved) -> viewModel.setDownloadDir(resolved)
+            else -> {
+                viewModel.resetToDefaultDir()
+                toast(context.getString(R.string.folder_not_writable))
+            }
+        }
+    }
+
+    fun requestStorage() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             runCatching {
                 context.startActivity(
                     Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION)
-                        .setData(Uri.fromParts("package", context.packageName, null))
+                        .setData(Uri.fromParts("package", context.packageName, null)),
                 )
             }.onFailure {
                 context.startActivity(Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION))
             }
         } else {
-            legacyPermission.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+            legacyStorage.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
         }
     }
 
-    fun attemptDownload() {
+    fun fetch() {
         val trimmed = link.trim()
         when {
-            !hasStorageAccess.value -> toast("Storage access is required to save downloads")
-            destination.isBlank() -> toast("Please choose a destination folder")
-            trimmed.isEmpty() -> toast("Please enter a URL")
-            !isWebUrl(trimmed) -> toast("That does not look like a valid URL")
-            else -> onStartDownload(trimmed, destination)
+            trimmed.isEmpty() -> toast(context.getString(R.string.enter_a_url))
+            !isWebUrl(trimmed) -> toast(context.getString(R.string.invalid_url))
+            !hasStorage.value -> toast(context.getString(R.string.storage_required))
+            else -> onFetch(trimmed)
         }
     }
 
     Scaffold(
+        topBar = {
+            AppTopBar(title = stringResource(R.string.app_name)) {
+                Row {
+                    IconButton(onClick = onOpenDownloads) {
+                        Icon(Icons.Filled.Download, contentDescription = stringResource(R.string.downloads))
+                    }
+                    IconButton(onClick = onOpenSettings) {
+                        Icon(Icons.Filled.Settings, contentDescription = stringResource(R.string.settings))
+                    }
+                }
+            }
+        },
         snackbarHost = { SnackbarHost(snackbar) },
         contentWindowInsets = WindowInsets.safeDrawing,
         containerColor = MaterialTheme.colorScheme.background,
@@ -166,57 +171,51 @@ private fun InitialRoute(onStartDownload: (link: String, destination: String) ->
                 .fillMaxSize()
                 .padding(inner)
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp, vertical = 24.dp)
+                .padding(horizontal = 20.dp, vertical = 12.dp),
         ) {
-            Header()
-
-            Spacer(Modifier.height(6.dp))
             Text(
                 stringResource(R.string.subtitle_message),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
 
-            Spacer(Modifier.height(28.dp))
-            FieldLabel(stringResource(R.string.youtube_link))
+            Spacer(Modifier.height(24.dp))
+            SectionLabel(stringResource(R.string.video_link))
             Spacer(Modifier.height(10.dp))
             LinkField(
                 value = link,
                 onValueChange = { link = it },
                 onPaste = {
                     val text = clipboardText(context)
-                    if (text == null) toast("Clipboard is empty") else link = text
+                    if (text == null) toast(context.getString(R.string.clipboard_empty)) else link = text
                 },
                 onClear = { link = "" },
             )
 
             Spacer(Modifier.height(22.dp))
-            FieldLabel(stringResource(R.string.destination_folder))
+            SectionLabel(stringResource(R.string.destination_folder))
             Spacer(Modifier.height(10.dp))
             DestinationField(
-                path = destination,
+                path = settings?.downloadDir.orEmpty(),
                 onClick = {
                     runCatching { folderPicker.launch(null) }.onFailure {
-                        destination = fallbackDownloadDir(context)
-                        toast("Using app Downloads folder")
+                        viewModel.resetToDefaultDir()
+                        toast(context.getString(R.string.using_default_folder))
                     }
                 },
             )
-
             Spacer(Modifier.height(10.dp))
-            InfoRow(stringResource(R.string.info_message))
+            InfoRow(stringResource(R.string.destination_hint))
 
-            if (!hasStorageAccess.value) {
+            if (!hasStorage.value) {
                 Spacer(Modifier.height(20.dp))
-                StorageAccessCard(onGrant = ::requestStorageAccess)
+                StorageAccessCard(onGrant = ::requestStorage)
             }
 
             Spacer(Modifier.height(32.dp))
             Button(
-                onClick = ::attemptDownload,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(54.dp),
+                onClick = ::fetch,
+                modifier = Modifier.fillMaxWidth().height(54.dp),
                 shape = RoundedCornerShape(16.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.primary,
@@ -225,36 +224,10 @@ private fun InitialRoute(onStartDownload: (link: String, destination: String) ->
             ) {
                 Icon(Icons.Filled.Download, contentDescription = null, modifier = Modifier.size(20.dp))
                 Spacer(Modifier.width(8.dp))
-                Text(stringResource(R.string.download), style = MaterialTheme.typography.labelLarge)
+                Text(stringResource(R.string.fetch_details), style = MaterialTheme.typography.labelLarge)
             }
         }
     }
-}
-
-@Composable
-private fun Header() {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Image(
-            painter = painterResource(R.drawable.logo),
-            contentDescription = stringResource(R.string.app_name),
-            modifier = Modifier.size(34.dp),
-        )
-        Spacer(Modifier.width(12.dp))
-        Text(
-            stringResource(R.string.app_name),
-            style = MaterialTheme.typography.titleLarge,
-            color = MaterialTheme.colorScheme.onBackground,
-        )
-    }
-}
-
-@Composable
-private fun FieldLabel(text: String) {
-    Text(
-        text,
-        style = MaterialTheme.typography.titleSmall,
-        color = MaterialTheme.colorScheme.onBackground,
-    )
 }
 
 @Composable
@@ -274,10 +247,7 @@ private fun LinkField(
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
         leadingIcon = {
             IconButton(onClick = onPaste) {
-                Icon(
-                    Icons.Filled.ContentPaste,
-                    contentDescription = stringResource(R.string.paste_from_clipboard),
-                )
+                Icon(Icons.Filled.ContentPaste, contentDescription = stringResource(R.string.paste_from_clipboard))
             }
         },
         trailingIcon = {
@@ -317,11 +287,7 @@ private fun DestinationField(path: String, onClick: () -> Unit) {
         Text(
             text = path.ifBlank { stringResource(R.string.tap_to_choose_folder) },
             style = MaterialTheme.typography.bodyMedium,
-            color = if (path.isBlank()) {
-                MaterialTheme.colorScheme.onSurfaceVariant
-            } else {
-                MaterialTheme.colorScheme.onSurface
-            },
+            color = MaterialTheme.colorScheme.onSurface,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
@@ -338,11 +304,7 @@ private fun InfoRow(text: String) {
             modifier = Modifier.size(16.dp),
         )
         Spacer(Modifier.width(8.dp))
-        Text(
-            text,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+        Text(text, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
@@ -352,7 +314,7 @@ private fun StorageAccessCard(onGrant: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(14.dp))
-            .padding(16.dp)
+            .padding(16.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
@@ -363,57 +325,26 @@ private fun StorageAccessCard(onGrant: () -> Unit) {
             )
             Spacer(Modifier.width(8.dp))
             Text(
-                "Storage access needed",
+                stringResource(R.string.storage_needed_title),
                 style = MaterialTheme.typography.titleSmall,
                 color = MaterialTheme.colorScheme.onSurface,
             )
         }
         Spacer(Modifier.height(4.dp))
         Text(
-            "Grant file access so downloaded videos can be saved to your device.",
+            stringResource(R.string.storage_needed_body),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         TextButton(onClick = onGrant, modifier = Modifier.align(Alignment.End)) {
-            Text("Allow access")
+            Text(stringResource(R.string.allow_access))
         }
     }
 }
-
-/** Tracks whether the app can write to shared storage, refreshing on resume. */
-@Composable
-private fun rememberStorageAccess(): MutableState<Boolean> {
-    val context = LocalContext.current
-    val lifecycleOwner = LocalLifecycleOwner.current
-    val state = remember { mutableStateOf(hasStorageAccess(context)) }
-    DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) state.value = hasStorageAccess(context)
-        }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
-    }
-    return state
-}
-
-private fun hasStorageAccess(context: Context): Boolean =
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-        Environment.isExternalStorageManager()
-    } else {
-        ContextCompat.checkSelfPermission(
-            context, Manifest.permission.WRITE_EXTERNAL_STORAGE
-        ) == PackageManager.PERMISSION_GRANTED
-    }
 
 private fun clipboardText(context: Context): String? {
-    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
+    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
     val clip = clipboard?.primaryClip ?: return null
     if (clip.itemCount == 0) return null
     return clip.getItemAt(0)?.text?.toString()?.trim()?.takeIf { it.isNotBlank() }
-}
-
-private fun fallbackDownloadDir(context: Context): String {
-    val external = context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
-    return external?.absolutePath
-        ?: File(context.filesDir, "downloads").apply { mkdirs() }.absolutePath
 }

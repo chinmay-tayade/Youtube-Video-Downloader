@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <!-- Anywhere on the primary shared volume the user may have chosen. -->
+    <external-path name="external_storage" path="." />
+    <!-- App-private fallback location. -->
+    <external-files-path name="external_files" path="." />
+    <files-path name="internal_files" path="downloads/" />
+</paths>
