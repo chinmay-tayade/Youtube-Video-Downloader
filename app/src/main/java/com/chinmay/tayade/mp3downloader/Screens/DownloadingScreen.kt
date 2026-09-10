@@ -1,126 +1,125 @@
 package com.chinmay.tayade.mp3downloader.Screens
 
 import android.os.Bundle
-import android.widget.FrameLayout
 import android.widget.ImageView
-import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import com.chaquo.python.Python
-import com.chinmay.tayade.mp3downloader.Fragments.*
+import com.chaquo.python.android.AndroidPlatform
+import com.chinmay.tayade.mp3downloader.Fragments.Fragment1
 import com.chinmay.tayade.mp3downloader.R
 import com.chinmay.tayade.mp3downloader.Utility.UtilityFunction
-import kotlinx.coroutines.*
-
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.json.JSONObject
 
 class DownloadingScreen : AppCompatActivity() {
 
-    private lateinit var apiKey :String
-    private  var likes :String = ""
-    private  var views :String = ""
-    private  var tittle :String = ""
-    private  var thumbnailUrl:String =""
-    private var currentFragmentState =0
+    private val utils = UtilityFunction()
+    private val statusCard = Fragment1()
 
-
-
-    companion object{
-
-        public const val location_Uri:String =""
-        public const val  youtube_link :String = ""
-    }
     override fun onCreate(savedInstanceState: Bundle?) {
-
-
-
-        val coroutineScope: CoroutineScope = MainScope()
-        var link = intent.getStringExtra("youtube_link").toString()
-        var location_Uri = intent.getStringExtra("location_uri").toString()
-
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_downloading_screen)
 
+        if (!Python.isStarted()) {
+            Python.start(AndroidPlatform(applicationContext))
+        }
 
-        runBlocking {
+        val link = intent?.getStringExtra("youtube_link").orEmpty()
+        val locationUri = intent?.getStringExtra("location_uri").orEmpty()
 
-           var result = async {   callPythonFunction(link)}
+        val thumbnail = findViewById<ImageView>(R.id.thumbnail)
+        val nameOfVideo = findViewById<TextView>(R.id.name_of_video)
+        val viewCounts = findViewById<TextView>(R.id.view_counts)
+        val likesCounts = findViewById<TextView>(R.id.like_counts)
 
-            result.await()
+        if (link.isBlank()) {
+            Toast.makeText(this, "No video link was received", Toast.LENGTH_LONG).show()
+            finish()
+            return
+        }
 
-            var thumbnail :ImageView = findViewById(R.id.thumbnail)
-            var name_of_video :TextView = findViewById(R.id.name_of_video)
-            var viewCounts :TextView = findViewById(R.id.view_counts)
-            var likesCounts :TextView = findViewById(R.id.like_counts)
-            var frameLayout:FrameLayout = findViewById(R.id.changing_frame)
+        showFragment(statusCard)
+        statusCard.setStatus("Grabbing info…")
 
+        lifecycleScope.launch {
+            val info = withContext(Dispatchers.IO) { fetchVideoInfo(link) }
 
-            UtilityFunction().loadYouTubeThumbnail(thumbnailUrl,thumbnail)
-            name_of_video.text = tittle.toString()
-            viewCounts.text = "$views Views"
-            likesCounts.text = "$likes Likes "
-
-
-
-
-            coroutineScope.launch(Dispatchers.IO) {
-                val py = Python.getInstance()
-                val pyObj = py.getModule("video_downloader")
-                pyObj.callAttr("download_video", link, location_Uri)
+            if (!info.ok) {
+                statusCard.setStatus("Couldn't load video", finished = true)
+                Toast.makeText(
+                    this@DownloadingScreen,
+                    info.error.ifBlank { "Could not load video information" },
+                    Toast.LENGTH_LONG
+                ).show()
+                finish()
+                return@launch
             }
 
-            switchFragment()
+            utils.loadYouTubeThumbnail(info.thumbnail, thumbnail)
+            nameOfVideo.text = info.title
+            viewCounts.text = "${utils.formatNumberAbbreviated(info.views)} Views"
+            likesCounts.text = "${utils.formatNumberAbbreviated(info.likes)} Likes"
 
+            statusCard.setStatus("Downloading…")
+            val result = withContext(Dispatchers.IO) { downloadVideo(link, locationUri) }
+
+            if (isFinishing || isDestroyed) return@launch
+            val done = if (result.ok) "Download complete" else "Download failed"
+            statusCard.setStatus(result.message.ifBlank { done }, finished = true)
+            Toast.makeText(this@DownloadingScreen, done, Toast.LENGTH_LONG).show()
         }
     }
 
-
-    private suspend fun callPythonFunction(videoUrl: String) {
-        val python = Python.getInstance()
-        val videoInfoModule = python.getModule("video_downloader")
-        val result = videoInfoModule.callAttr("get_video_info", videoUrl)
-
-        val resultString = result.toString()
-
-        val splitResult = resultString.split(",")
-        val regexPattern = "'(.*?)'".toRegex()
-        val matchResult = regexPattern.find(splitResult[1])
-
-         tittle = splitResult[0].removePrefix("('").removeSuffix("'")
-         thumbnailUrl = matchResult?.value?.trim('\'').toString().trim()
-         var views = splitResult[2].replace(Regex("\\D"), "").toString()
-        var  likes = splitResult[3].replace(Regex("\\D"), "").toString()
-
-        this.likes = UtilityFunction().formatNumberAbbreviated(likes.toLong())
-        this.views = UtilityFunction().formatNumberAbbreviated(views.toLong())
-
-
-
-
-
-        println("Title: $tittle")
-        println("Thumbnail: $thumbnailUrl")
-        println("Views: $views")
-        println("Likes: $likes")
+    private fun fetchVideoInfo(link: String): VideoInfo {
+        return try {
+            val json = pythonModule().callAttr("get_video_info", link).toString()
+            val obj = JSONObject(json)
+            VideoInfo(
+                ok = obj.optBoolean("ok", false),
+                title = obj.optString("title", "Unknown title"),
+                thumbnail = obj.optString("thumbnail", ""),
+                views = obj.optLong("views", 0L),
+                likes = obj.optLong("likes", 0L),
+                error = obj.optString("error", "")
+            )
+        } catch (e: Exception) {
+            VideoInfo(false, "", "", 0L, 0L, e.message ?: "Unexpected error")
+        }
     }
 
-    private fun switchFragment() {
-        val newFragment: Fragment
-        when (currentFragmentState) {
-            1 -> newFragment = Fragment1()
-            2 -> newFragment = Fragment2()
-            3 -> newFragment = Fragment3()
-            4 -> newFragment = Fragment4()
-            5 -> newFragment = Fragment5()
-            else -> newFragment = Fragment1() // Default to Fragment1
+    private fun downloadVideo(link: String, destination: String): DownloadResult {
+        return try {
+            val json = pythonModule().callAttr("download_video", link, destination).toString()
+            val obj = JSONObject(json)
+            DownloadResult(obj.optBoolean("ok", false), obj.optString("message", ""))
+        } catch (e: Exception) {
+            DownloadResult(false, e.message ?: "Unexpected error")
         }
+    }
 
+    private fun pythonModule() = Python.getInstance().getModule("video_downloader")
 
-
-        // Replace the current fragment with the new fragment
+    private fun showFragment(fragment: Fragment) {
+        if (isFinishing || isDestroyed) return
         supportFragmentManager.beginTransaction()
-            .replace(R.id.changing_frame, newFragment)
-            .commit()
+            .replace(R.id.changing_frame, fragment)
+            .commitAllowingStateLoss()
     }
 
+    private data class VideoInfo(
+        val ok: Boolean,
+        val title: String,
+        val thumbnail: String,
+        val views: Long,
+        val likes: Long,
+        val error: String
+    )
+
+    private data class DownloadResult(val ok: Boolean, val message: String)
 }

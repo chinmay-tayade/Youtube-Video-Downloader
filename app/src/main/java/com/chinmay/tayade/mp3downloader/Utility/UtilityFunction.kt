@@ -1,72 +1,49 @@
 package com.chinmay.tayade.mp3downloader.Utility
-import android.content.Context
-import android.net.Uri
-import java.net.URL
+
 import android.util.Patterns
 import android.widget.ImageView
-import com.chaquo.python.Python
-import com.chaquo.python.android.AndroidPlatform
-import java.io.*
+import com.chinmay.tayade.mp3downloader.R
 import com.squareup.picasso.Picasso
-import java.util.regex.Pattern
+import kotlin.math.abs
+import kotlin.math.ln
 
 class UtilityFunction {
 
-   companion object{
-   }
-
-    internal fun isUrl(input: String): Boolean {
-        val urlPattern = Patterns.WEB_URL
-        if (urlPattern.matcher(input).matches()) {
-            try {
-                val url = URL(input)
-                url.openConnection()
-                return true
-            } catch (e: Exception) {
-                return false
-            }
-        }
-      return false
+    companion object {
+        private val UNITS = arrayOf("K", "M", "B", "T")
     }
 
-    internal fun formatNumberAbbreviated(number: Long): String {
-        if (number < 1000) {
-            return number.toString()
-        }
-
-        val units = arrayOf("K", "M", "B", "T") // Add more units as needed
-        val suffixIndex = (Math.log10(number.toDouble()) / 3).toInt()
-
-        val abbreviatedNumber = number / Math.pow(1000.0, suffixIndex.toDouble())
-        val formattedNumber = "%.2f".format(abbreviatedNumber)
-
-        return formattedNumber + units[suffixIndex - 1]
+    /**
+     * Lightweight, offline check that a string looks like a web URL.
+     * Does not open a network connection (that would crash on the main thread).
+     */
+    internal fun isUrl(input: String?): Boolean {
+        if (input.isNullOrBlank()) return false
+        return Patterns.WEB_URL.matcher(input.trim()).matches()
     }
 
-    internal fun downloadVideo(context: Context, videoUrl: String, targetUri: Uri) {
-        val ytDlpScript = File(context.filesDir, "yt-dlp")
-        ytDlpScript.setExecutable(true)
+    internal fun formatNumberAbbreviated(number: Long?): String {
+        val value = number ?: 0L
+        if (abs(value) < 1000) return value.toString()
 
-        val command = "./${ytDlpScript.absolutePath} -o ${targetUri.path} $videoUrl"
-        val process = Runtime.getRuntime().exec(command)
+        val suffixIndex = (ln(abs(value).toDouble()) / ln(1000.0)).toInt()
+        val safeIndex = suffixIndex.coerceIn(1, UNITS.size)
 
-        val exitCode = process.waitFor()
-        if (exitCode == 0) {
-            // Download completed successfully
-        } else {
-            // Download failed
-        }
+        val abbreviated = value / Math.pow(1000.0, safeIndex.toDouble())
+        return "%.2f%s".format(abbreviated, UNITS[safeIndex - 1])
     }
 
-
-
-    fun loadYouTubeThumbnail(url: String, imageView: ImageView) {
+    fun loadYouTubeThumbnail(url: String?, imageView: ImageView) {
+        if (url.isNullOrBlank()) {
+            Picasso.get().cancelRequest(imageView)
+            return
+        }
         Picasso.get()
             .load(url)
+            .placeholder(R.drawable.youtubeplayer)
+            .error(R.drawable.youtubeplayer)
+            .fit()
+            .centerCrop()
             .into(imageView)
     }
-
-
-
-
 }

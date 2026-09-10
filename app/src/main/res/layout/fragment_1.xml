@@ -1,47 +1,41 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/changing_frame"
-    android:layout_width="318dp"
-    android:layout_height="53dp"
-    android:layout_alignParentLeft="true"
-    android:layout_alignParentTop="true"
-    android:layout_marginStart="45dp"
-    android:layout_marginTop="22dp"
-    android:layout_marginEnd="46dp"
-    android:clipToOutline="true">
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/frame1"
+    android:orientation="vertical"
+    android:padding="14dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
 
         <TextView
             android:id="@+id/message_status"
-            android:layout_width="87dp"
-            android:layout_height="16dp"
-            android:layout_alignParentLeft="true"
-            android:layout_alignParentTop="true"
-            android:layout_marginTop="8dp"
-            android:gravity="center_vertical"
-            android:lineSpacingExtra="1sp"
-            android:text="Downloding ...."
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:text="@string/grabbing_info"
             android:textAppearance="@style/downloading" />
 
         <TextView
             android:id="@+id/percentage_status"
-            android:layout_width="100dp"
-            android:layout_height="16dp"
-            android:layout_alignParentLeft="true"
-            android:layout_alignParentTop="true"
-            android:layout_marginLeft="220dp"
-            android:layout_marginTop="8dp"
-            android:gravity="left|center_vertical"
-            android:lineSpacingExtra="1sp"
-            android:text="25/100mb"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=""
             android:textAppearance="@style/mb_4_25mb" />
+    </LinearLayout>
 
-
-        <LinearLayout
-            android:id="@+id/rectangle_1"
-            android:layout_width="320dp"
-            android:orientation="horizontal"
-            android:layout_height="7dp"
-            android:layout_alignParentLeft="true"
-            android:layout_alignParentTop="true"
-            android:layout_marginTop="36dp" />
-    </FrameLayout>
+    <ProgressBar
+        android:id="@+id/rectangle_1"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:indeterminate="true"
+        android:indeterminateTint="@color/brand"
+        android:progressTint="@color/brand" />
+</LinearLayout>

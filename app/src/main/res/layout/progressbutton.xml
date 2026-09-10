@@ -1,38 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:orientation="horizontal"
     android:id="@+id/progressbutton"
+    android:layout_width="match_parent"
+    android:layout_height="54dp"
+    android:background="@drawable/loading_button"
     android:gravity="center"
-    android:background="@drawable/loading_button">
+    android:orientation="horizontal">
 
     <com.airbnb.lottie.LottieAnimationView
-        app:lottie_autoPlay="true"
-        app:lottie_rawRes="@raw/spinner"
+        android:layout_width="36dp"
+        android:layout_height="36dp"
         android:keepScreenOn="true"
-        android:layout_width="44dp"
-        app:lottie_repeatCount="10000"
-        android:layout_height="44dp">
-
-    </com.airbnb.lottie.LottieAnimationView>
+        app:lottie_autoPlay="true"
+        app:lottie_loop="true"
+        app:lottie_rawRes="@raw/spinner" />
 
     <TextView
-        android:paddingLeft="10dp"
-        android:layout_width="115dp"
-        android:height="20dp"
-        android:text="Grabbing Info"
-        android:textSize="14sp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="10dp"
         android:fontFamily="@font/plussansjakarta_semibold"
-        android:layout_gravity="center"
-        android:gravity="center_vertical"
-        android:layout_height="match_parent">
-
-    </TextView>
-
-
-    <!-- Frame 31 -->
-
-
-
+        android:text="@string/grabbing_info"
+        android:textColor="@color/text_primary"
+        android:textSize="14sp" />
 </LinearLayout>

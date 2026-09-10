@@ -1,59 +1,94 @@
-import yt_dlp
+import json
 import os
 
-def download_video(video_url, download_destination):
+import yt_dlp
+
+
+def _safe_int(value):
     try:
-        ydl_opts = {
-            'outtmpl': os.path.join(download_destination, '%(title)s.%(ext)s'),
-        }
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(video_url, download=False)
-            ydl.prepare_filename(info)
+        return int(value)
+    except (TypeError, ValueError):
+        return 0
 
-            # Download the video
-            ydl.download([video_url])
-
-            # Get the downloaded file path
-            file_path = ydl.prepare_filename(info)
-            return 1, "Video downloaded successfully.", file_path
-    except Exception as e:
-        return 0, str(e), None
-
-def convert_to_mp3(video_file, mp3_destination):
-    try:
-        # Perform the conversion to MP3
-        # Code to convert video_file to MP3 format
-        return 2, "Video converted to MP3 successfully."
-    except Exception as e:
-        return 0, str(e)
-
-def save_to_destination(mp3_file, destination_path):
-    try:
-        # Save the MP3 file to the specified destination path
-        new_file_path = os.path.join(destination_path, os.path.basename(mp3_file))
-        os.rename(mp3_file, new_file_path)
-        return 3, "MP3 saved to destination folder successfully."
-    except Exception as e:
-        return 0, str(e)
-
-def handle_errors(error_list):
-    if error_list:
-        return 0, ", ".join(error_list)
-    else:
-        return 1, "No errors occurred."
 
 def get_video_info(video_url):
-    ydl_opts = {
-        'skip_download': True,
-        'no_warnings': True,
+    """Return a JSON string with video metadata.
+
+    Always returns a JSON object so the Android side never has to deal with
+    None / malformed tuples. On failure `ok` is False and `error` is set.
+    """
+    result = {
+        "ok": False,
+        "title": "",
+        "thumbnail": "",
+        "views": 0,
+        "likes": 0,
+        "duration": 0,
+        "error": "",
     }
 
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        video_info = ydl.extract_info(video_url, download=False)
+    if not video_url:
+        result["error"] = "No URL provided"
+        return json.dumps(result)
 
-    title = video_info.get('title')
-    thumbnail = video_info.get('thumbnail')
-    views = video_info.get('view_count')
-    likes = video_info.get('like_count')
+    ydl_opts = {
+        "skip_download": True,
+        "no_warnings": True,
+        "quiet": True,
+    }
 
-    return title, thumbnail, views, likes
+    try:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(video_url, download=False) or {}
+
+        result["ok"] = True
+        result["title"] = str(info.get("title") or "Unknown title")
+        result["thumbnail"] = str(info.get("thumbnail") or "")
+        result["views"] = _safe_int(info.get("view_count"))
+        result["likes"] = _safe_int(info.get("like_count"))
+        result["duration"] = _safe_int(info.get("duration"))
+    except Exception as e:  # noqa: BLE001 - surface any yt-dlp failure to the UI
+        result["ok"] = False
+        result["error"] = str(e)
+
+    return json.dumps(result)
+
+
+def download_video(video_url, download_destination):
+    """Download a video. Returns a JSON string describing the outcome."""
+    result = {"ok": False, "message": "", "file_path": ""}
+
+    if not video_url:
+        result["message"] = "No URL provided"
+        return json.dumps(result)
+
+    if not download_destination:
+        result["message"] = "No download destination provided"
+        return json.dumps(result)
+
+    try:
+        os.makedirs(download_destination, exist_ok=True)
+    except OSError as e:
+        result["message"] = "Cannot create destination folder: {}".format(e)
+        return json.dumps(result)
+
+    ydl_opts = {
+        "outtmpl": os.path.join(download_destination, "%(title)s.%(ext)s"),
+        "no_warnings": True,
+        "quiet": True,
+        "noprogress": True,
+    }
+
+    try:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(video_url, download=True) or {}
+            file_path = ydl.prepare_filename(info)
+
+        result["ok"] = True
+        result["message"] = "Video downloaded successfully."
+        result["file_path"] = file_path or ""
+    except Exception as e:  # noqa: BLE001
+        result["ok"] = False
+        result["message"] = str(e)
+
+    return json.dumps(result)
