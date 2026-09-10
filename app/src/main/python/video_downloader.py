@@ -35,6 +35,8 @@ def get_video_info(video_url):
         "skip_download": True,
         "no_warnings": True,
         "quiet": True,
+        # Progressive stream: no ffmpeg merge step required on device.
+        "format": "best",
     }
 
     try:
@@ -77,6 +79,8 @@ def download_video(video_url, download_destination):
         "no_warnings": True,
         "quiet": True,
         "noprogress": True,
+        # Progressive stream: no ffmpeg merge step required on device.
+        "format": "best",
     }
 
     try:

@@ -1,125 +1,231 @@
+@file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+
 package com.chinmay.tayade.mp3downloader.Screens
 
 import android.os.Bundle
-import android.widget.ImageView
-import android.widget.TextView
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
-import androidx.fragment.app.Fragment
-import androidx.lifecycle.lifecycleScope
-import com.chaquo.python.Python
-import com.chaquo.python.android.AndroidPlatform
-import com.chinmay.tayade.mp3downloader.Fragments.Fragment1
-import com.chinmay.tayade.mp3downloader.R
-import com.chinmay.tayade.mp3downloader.Utility.UtilityFunction
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import org.json.JSONObject
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.ErrorOutline
+import androidx.compose.material.icons.filled.ThumbUp
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
+import com.chinmay.tayade.mp3downloader.data.DownloadUiState
+import com.chinmay.tayade.mp3downloader.data.DownloadViewModel
+import com.chinmay.tayade.mp3downloader.ui.theme.Mp3DownloaderTheme
+import com.chinmay.tayade.mp3downloader.ui.theme.SuccessGreen
+import com.chinmay.tayade.mp3downloader.util.formatCountAbbreviated
 
-class DownloadingScreen : AppCompatActivity() {
-
-    private val utils = UtilityFunction()
-    private val statusCard = Fragment1()
+class DownloadingScreen : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_downloading_screen)
-
-        if (!Python.isStarted()) {
-            Python.start(AndroidPlatform(applicationContext))
-        }
 
         val link = intent?.getStringExtra("youtube_link").orEmpty()
-        val locationUri = intent?.getStringExtra("location_uri").orEmpty()
+        val destination = intent?.getStringExtra("location_uri").orEmpty()
 
-        val thumbnail = findViewById<ImageView>(R.id.thumbnail)
-        val nameOfVideo = findViewById<TextView>(R.id.name_of_video)
-        val viewCounts = findViewById<TextView>(R.id.view_counts)
-        val likesCounts = findViewById<TextView>(R.id.like_counts)
+        setContent {
+            Mp3DownloaderTheme {
+                val context = LocalContext.current
+                val viewModel: DownloadViewModel = viewModel()
 
-        if (link.isBlank()) {
-            Toast.makeText(this, "No video link was received", Toast.LENGTH_LONG).show()
-            finish()
-            return
+                LaunchedEffect(Unit) {
+                    if (link.isBlank()) {
+                        Toast.makeText(context, "No video link was received", Toast.LENGTH_LONG).show()
+                        finish()
+                    } else {
+                        viewModel.start(link, destination)
+                    }
+                }
+
+                val state by viewModel.state.collectAsStateWithLifecycle()
+                DownloadingContent(state)
+            }
         }
+    }
+}
 
-        showFragment(statusCard)
-        statusCard.setStatus("Grabbing info…")
+@Composable
+private fun DownloadingContent(state: DownloadUiState) {
+    Scaffold(
+        contentWindowInsets = WindowInsets.safeDrawing,
+        containerColor = MaterialTheme.colorScheme.background,
+    ) { inner ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(inner)
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 20.dp, vertical = 24.dp)
+        ) {
+            Text(
+                "Downloading",
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onBackground,
+            )
 
-        lifecycleScope.launch {
-            val info = withContext(Dispatchers.IO) { fetchVideoInfo(link) }
-
-            if (!info.ok) {
-                statusCard.setStatus("Couldn't load video", finished = true)
-                Toast.makeText(
-                    this@DownloadingScreen,
-                    info.error.ifBlank { "Could not load video information" },
-                    Toast.LENGTH_LONG
-                ).show()
-                finish()
-                return@launch
+            val showVideoCard = state.fatalError == null || state.info != null
+            if (showVideoCard) {
+                Spacer(Modifier.height(24.dp))
+                VideoCard(state)
             }
 
-            utils.loadYouTubeThumbnail(info.thumbnail, thumbnail)
-            nameOfVideo.text = info.title
-            viewCounts.text = "${utils.formatNumberAbbreviated(info.views)} Views"
-            likesCounts.text = "${utils.formatNumberAbbreviated(info.likes)} Likes"
-
-            statusCard.setStatus("Downloading…")
-            val result = withContext(Dispatchers.IO) { downloadVideo(link, locationUri) }
-
-            if (isFinishing || isDestroyed) return@launch
-            val done = if (result.ok) "Download complete" else "Download failed"
-            statusCard.setStatus(result.message.ifBlank { done }, finished = true)
-            Toast.makeText(this@DownloadingScreen, done, Toast.LENGTH_LONG).show()
+            Spacer(Modifier.height(20.dp))
+            StatusCard(state)
         }
     }
+}
 
-    private fun fetchVideoInfo(link: String): VideoInfo {
-        return try {
-            val json = pythonModule().callAttr("get_video_info", link).toString()
-            val obj = JSONObject(json)
-            VideoInfo(
-                ok = obj.optBoolean("ok", false),
-                title = obj.optString("title", "Unknown title"),
-                thumbnail = obj.optString("thumbnail", ""),
-                views = obj.optLong("views", 0L),
-                likes = obj.optLong("likes", 0L),
-                error = obj.optString("error", "")
+@Composable
+private fun VideoCard(state: DownloadUiState) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(20.dp))
+            .padding(14.dp)
+    ) {
+        AsyncImage(
+            model = state.info?.thumbnail,
+            contentDescription = null,
+            contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+            modifier = Modifier
+                .fillMaxWidth()
+                .aspectRatio(16f / 9f)
+                .clip(RoundedCornerShape(14.dp))
+                .background(MaterialTheme.colorScheme.surfaceVariant),
+        )
+
+        Spacer(Modifier.height(14.dp))
+        Text(
+            text = state.info?.title ?: "Loading…",
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurface,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+        )
+
+        Spacer(Modifier.height(12.dp))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Stat(
+                icon = { Icon(Icons.Filled.Visibility, null, Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant) },
+                text = state.info?.let { "${formatCountAbbreviated(it.views)} views" } ?: "—",
             )
-        } catch (e: Exception) {
-            VideoInfo(false, "", "", 0L, 0L, e.message ?: "Unexpected error")
+            Spacer(Modifier.width(20.dp))
+            Stat(
+                icon = { Icon(Icons.Filled.ThumbUp, null, Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant) },
+                text = state.info?.let { "${formatCountAbbreviated(it.likes)} likes" } ?: "—",
+            )
         }
     }
+}
 
-    private fun downloadVideo(link: String, destination: String): DownloadResult {
-        return try {
-            val json = pythonModule().callAttr("download_video", link, destination).toString()
-            val obj = JSONObject(json)
-            DownloadResult(obj.optBoolean("ok", false), obj.optString("message", ""))
-        } catch (e: Exception) {
-            DownloadResult(false, e.message ?: "Unexpected error")
+@Composable
+private fun Stat(icon: @Composable () -> Unit, text: String) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        icon()
+        Spacer(Modifier.width(6.dp))
+        Text(
+            text,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+@Composable
+private fun StatusCard(state: DownloadUiState) {
+    val accent: Color = when {
+        state.fatalError != null || (state.finished && !state.success) -> MaterialTheme.colorScheme.error
+        state.finished && state.success -> SuccessGreen
+        else -> MaterialTheme.colorScheme.primary
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(20.dp))
+            .padding(14.dp)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                when {
+                    state.finished && state.success ->
+                        Icon(Icons.Filled.CheckCircle, null, Modifier.size(18.dp), tint = accent)
+                    state.finished ->
+                        Icon(Icons.Filled.ErrorOutline, null, Modifier.size(18.dp), tint = accent)
+                    else -> {}
+                }
+                if (state.finished) Spacer(Modifier.width(8.dp))
+                Text(
+                    state.fatalError ?: state.statusText,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+        }
+
+        Spacer(Modifier.height(12.dp))
+        if (state.inProgress) {
+            LinearProgressIndicator(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(6.dp)
+                    .clip(RoundedCornerShape(3.dp)),
+                color = accent,
+                trackColor = MaterialTheme.colorScheme.surfaceVariant,
+            )
+        } else {
+            LinearProgressIndicator(
+                progress = 1f,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(6.dp)
+                    .clip(RoundedCornerShape(3.dp)),
+                color = accent,
+                trackColor = MaterialTheme.colorScheme.surfaceVariant,
+            )
         }
     }
-
-    private fun pythonModule() = Python.getInstance().getModule("video_downloader")
-
-    private fun showFragment(fragment: Fragment) {
-        if (isFinishing || isDestroyed) return
-        supportFragmentManager.beginTransaction()
-            .replace(R.id.changing_frame, fragment)
-            .commitAllowingStateLoss()
-    }
-
-    private data class VideoInfo(
-        val ok: Boolean,
-        val title: String,
-        val thumbnail: String,
-        val views: Long,
-        val likes: Long,
-        val error: String
-    )
-
-    private data class DownloadResult(val ok: Boolean, val message: String)
 }
