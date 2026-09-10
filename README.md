@@ -3,432 +3,308 @@
 <div align="center">
 
 ![Android](https://img.shields.io/badge/Platform-Android-3DDC84?style=for-the-badge&logo=android&logoColor=white)
-![Kotlin](https://img.shields.io/badge/Kotlin-100%25-7F52FF?style=for-the-badge&logo=kotlin&logoColor=white)
+![Kotlin](https://img.shields.io/badge/Kotlin-1.9-7F52FF?style=for-the-badge&logo=kotlin&logoColor=white)
+![Compose](https://img.shields.io/badge/UI-Jetpack%20Compose-4285F4?style=for-the-badge&logo=jetpackcompose&logoColor=white)
+![Min SDK](https://img.shields.io/badge/minSdk-24-orange?style=for-the-badge)
 ![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
 
-**A high-performance media downloader for Android built with Kotlin**
-
-[Report Bug](../../issues) • [Request Feature](../../issues)
+**An Android video / audio downloader — single-Activity Jetpack Compose, a
+foreground download service with live progress, a Room-backed download library,
+and a `yt-dlp` engine embedded through Chaquopy.**
 
 </div>
+
+---
+
+## Contents
+
+- [About](#about)
+- [Screens & flow](#screens--flow)
+- [Features](#features)
+- [Architecture](#architecture)
+- [How a download works](#how-a-download-works-end-to-end)
+- [Project structure](#project-structure)
+- [Tech stack](#tech-stack)
+- [Design decisions & trade-offs](#design-decisions--trade-offs)
+- [Known limitations](#known-limitations)
+- [Building](#building)
+- [Testing](#testing)
+- [Permissions](#permissions)
+- [Roadmap](#roadmap)
+- [Legal](#legal) · [License](#license) · [Author](#author)
 
 ---
 
 ## About
 
-YouTube Video Downloader is a powerful Android application that enables users to download and manage video content efficiently. Built with modern Android development practices using Kotlin Coroutines for asynchronous operations, the app provides a seamless downloading experience with support for multiple formats, quality options, and background processing.
+Paste (or **share**) a link, pick a quality, and the app downloads it in the
+background with a live progress notification. Finished files land in a folder of
+your choosing and appear in Files / Gallery. Every download is recorded in an
+on-device library where you can open, share, retry or delete it.
 
-### Key Features
+The download engine is [`yt-dlp`](https://github.com/yt-dlp/yt-dlp) running in an
+embedded **Python 3.12** runtime ([Chaquopy](https://chaquo.com/chaquopy/)). The
+app never ships `ffmpeg`, so it only offers formats that save **without a merge
+or conversion step**:
 
-- **Native Kotlin** implementation for optimal performance
-- **Coroutines-based** async operations for smooth UX
-- **Background Downloads** with notification progress
-- **Multi-format Support** for various media formats
-- **Quality Selection** for different video resolutions
-- **Download Manager** for organized media library
+- **progressive video** — video + audio already muxed (up to ~720p on YouTube), and
+- **audio-only** streams — M4A / Opus / WebM.
+
+When a site exposes no standalone audio stream to an unauthenticated client, the
+audio option transparently falls back to the muxed progressive stream so the
+download still succeeds.
+
+---
+
+## Screens & flow
+
+```
+ ┌────────────┐  Fetch details   ┌──────────────┐  Download   ┌───────────────┐
+ │    Home     │ ───────────────▶ │   Formats     │ ──────────▶ │   Downloads    │
+ │ URL + folder │ ◀─────────────── │ quality/audio │            │ progress +     │
+ └────────────┘      back          └──────────────┘            │ library        │
+        │                                                      └───────────────┘
+        └── top bar ──▶ Downloads · Settings
+```
+
+| Screen | What it does |
+|--------|--------------|
+| **Home** | URL field (paste / clipboard / share-sheet), destination folder picker, storage-permission prompt, **Fetch details**. |
+| **Formats** | Video info card (thumbnail, title, channel, views, likes, duration) + a chip picker of the *real* progressive heights and audio containers `yt-dlp` reports. |
+| **Downloads** | *In progress* (progress bar, speed / ETA, cancel) and *Completed / Failed* (size, date, tap-to-open, overflow → share / retry / delete). Clear-finished. Empty state. |
+| **Settings** | Default download folder, light / dark / system theme (applied live), preferred audio format. |
+
+Back navigation is a genuine Navigation-Compose back stack: back on Home leaves
+the app, back on any other screen pops to the previous one, and a running
+download is unaffected by any of it.
 
 ---
 
 ## Features
 
-### Download Management
-- Download videos in various formats (MP4, MKV, WEBM)
-- Multiple quality options (4K, 1080p, 720p, 480p, 360p)
-- Audio-only downloads (MP3, M4A, AAC)
-- Thumbnail preview before downloading
-- Video information display (duration, size, format)
-- Resume interrupted downloads
-- Pause and cancel active downloads
-
-### Background Processing
-- Download videos while using other apps
-- Persistent foreground service for reliability
-- Progress notifications with real-time updates
-- Batch download queue management
-- Automatic retry on network failure
-- Smart bandwidth management
-
-### Media Library
-- Built-in media player for downloaded content
-- Organized file management system
-- Search and filter downloaded videos
-- Sort by date, name, or size
-- Delete or share downloaded files
-- Storage location selection
-- Internal/external storage support
-
-### User Interface
-- Material Design following Android guidelines
-- Clean and intuitive download interface
-- Real-time download progress tracking
-- Quick download from clipboard URL
-- History of downloaded videos
-- Dark mode support
-
-### Performance
-- Efficient memory management
-- Optimized network requests
-- Low battery consumption
-- Minimal storage overhead
-- Fast download speeds with parallel connections
-- Smart caching mechanism
-
----
-
-## Tech Stack
-
-### Core Technologies
-- **Language:** Kotlin 1.9+
-- **Architecture:** MVVM (Model-View-ViewModel)
-- **Minimum SDK:** 24 (Android 7.0)
-- **Target SDK:** 34 (Android 14)
-
-### Asynchronous Programming
-- **Kotlin Coroutines** - Structured concurrency
-- **Flow** - Reactive data streams
-- **StateFlow** - State management
-- **Dispatchers** - Thread management
-
-### Networking
-- **OkHttp** - HTTP client for downloads
-- **Retrofit** - REST API integration (for metadata)
-- **Download Manager API** - Android's native download manager
-- **Network Security** - SSL/TLS support
-
-### Background Processing
-- **Foreground Service** - Persistent background downloads
-- **WorkManager** - Scheduled and deferred tasks
-- **Notification Manager** - Download progress notifications
-- **Broadcast Receivers** - Download completion handling
-
-### Storage & File Management
-- **File I/O** - Efficient file operations
-- **MediaStore API** - Media file management
-- **Storage Access Framework** - User-selected locations
-- **Scoped Storage** - Android 10+ compatibility
-
-### UI Components
-- **RecyclerView** - Efficient list display
-- **ViewBinding** - Type-safe view access
-- **Material Components** - Modern UI elements
-- **ConstraintLayout** - Responsive layouts
-- **Animations** - Smooth transitions
-
-### Dependency Injection
-- **Hilt** - Dependency injection framework
-
-### Database
-- **Room Database** - Download history and metadata storage
-- **SQLite** - Local data persistence
-
-### Testing
-- **JUnit** - Unit testing
-- **MockK** - Mocking framework
-- **Coroutines Test** - Testing async code
-- **Espresso** - UI testing
+- **Format & quality picker** driven by the formats `yt-dlp` actually reports —
+  no hard-coded resolution list.
+- **Foreground download service** — downloads keep running when the app is
+  backgrounded, the Activity is recreated, or the user presses back. One job at a
+  time; the rest queue. Interrupted rows are recovered on next launch.
+- **Live progress** — real downloaded-bytes / total / speed / ETA from `yt-dlp`
+  progress hooks, throttled and surfaced in both the notification and the
+  Downloads screen.
+- **Cancel** from the notification action or the list; partial files are removed.
+- **Downloads library** (Room) — status, size, date; open & share via
+  `FileProvider`, retry failed jobs, delete (with file), clear finished.
+- **Share-sheet intake** — share a link from YouTube or a browser straight into
+  the app; `https://youtu.be/…` / `youtube.com` links open it too.
+- **Single-Activity Navigation Compose** with predictive-back support.
+- **Settings** persisted with DataStore; theme switch applies without a restart.
+- Runtime permission handling for `POST_NOTIFICATIONS` (13+) and all-files access.
+- Finished files are `MediaScanner`-indexed so they show up in Gallery / Files
+  immediately.
 
 ---
 
 ## Architecture
 
-The application follows **MVVM architecture** with clean separation:
+Single-Activity **MVVM** with unidirectional state. Every ViewModel exposes a
+`StateFlow`; the UI is a pure function of it.
 
 ```
-app/
-├── data/
-│   ├── local/
-│   │   ├── dao/              # Room DAOs
-│   │   ├── entity/           # Database entities
-│   │   └── database/         # Database instance
-│   ├── repository/           # Repository implementations
-│   └── model/                # Data models
-│
-├── domain/
-│   ├── usecase/              # Business logic
-│   │   ├── DownloadVideoUseCase.kt
-│   │   ├── GetVideoInfoUseCase.kt
-│   │   └── ManageDownloadsUseCase.kt
-│   └── repository/           # Repository interfaces
-│
-├── presentation/
+MainActivity ──hosts──▶ AppNavHost (Navigation Compose)
+                          ├─ HomeScreen        ── HomeViewModel
+                          ├─ FormatsScreen     ── FormatsViewModel
+                          ├─ DownloadsScreen   ── DownloadsViewModel
+                          └─ SettingsScreen    ── SettingsViewModel
+                                    │
+                                    ▼
+                        DownloadRepository  (process singleton — single source of truth)
+                          ├─ Room  (AppDatabase / DownloadDao)     durable records
+                          ├─ StateFlow<Map<id, DownloadProgress>>  live byte progress
+                          ├─ ConcurrentHashMap<id>                 cancellation flags
+                          └─ start / cancel ──▶ DownloadService (foreground, serial queue)
+                                                      │
+                                                      ▼
+                             PythonDownloader ──▶ video_downloader.py ──▶ yt-dlp
+```
+
+- **`DownloadRepository`** is the only thing that talks to the service. It merges
+  the durable Room rows with the transient in-memory progress into one
+  `Flow<List<DownloadRecord>>` the UI collects — the screens never touch Room or
+  the service directly.
+- **`DownloadService`** is a `LifecycleService` that drains the queue one job at
+  a time on a service-scoped coroutine, keeps the foreground notification in
+  sync, and stops itself (`stopSelf(startId)`) when the queue is empty.
+- **`PythonDownloader`** is an exception-safe bridge: every Python call returns a
+  fully-formed result object, and the Python side always emits JSON.
+
+---
+
+## How a download works (end to end)
+
+1. **Home** validates the URL and navigates to `formats/{base64(url)}`.
+2. **`FormatsViewModel.load`** calls `PythonDownloader.probeFormats`, which runs
+   `yt_dlp` with `process=False` — this skips yt-dlp's format-selection step (it
+   would otherwise attempt a `bestvideo+bestaudio` merge and fail with no
+   ffmpeg) while still returning the full `formats` list and metadata.
+3. The user picks a `MediaSelection`; **`util/FormatSpec.kt`** (pure, unit-tested)
+   turns it into a yt-dlp selector string, e.g.
+   `best[height<=720][ext=mp4][vcodec!=none][acodec!=none]/…/best/worst`.
+4. **`DownloadRepository.enqueue`** inserts a `QUEUED` Room row and calls
+   `ContextCompat.startForegroundService`.
+5. **`DownloadService`** promotes itself to the foreground (typed `dataSync`
+   service on API 34), then runs `PythonDownloader.download(url, dir, selector,
+   sink)` on `Dispatchers.IO`.
+6. `sink` is a Kotlin object passed into Python. yt-dlp's `progress_hooks` call
+   `sink.onProgress(json)` on every chunk and `sink.isCancelled()` between
+   chunks; the service throttles those to a `StateFlow` update + a notification
+   update (~600 ms) and a persisted percent.
+7. On completion **`DownloadRepository.finish`** writes the terminal row
+   (`COMPLETED` / `FAILED` / `CANCELLED`), the service scans the file into
+   MediaStore and posts a result notification, then drains the next job or stops.
+
+---
+
+## Project structure
+
+```
+app/src/main/
+├── java/com/chinmay/tayade/mp3downloader/
+│   ├── MainActivity.kt                     single Activity, intent parsing, theme
+│   ├── App.kt                              Python + Room + notification-channel init
 │   ├── ui/
-│   │   ├── main/             # Main screen
-│   │   ├── downloads/        # Downloads list
-│   │   ├── settings/         # Settings screen
-│   │   └── player/           # Media player
-│   ├── viewmodel/            # ViewModels
-│   └── adapter/              # RecyclerView adapters
-│
-├── service/
-│   ├── DownloadService.kt    # Foreground download service
-│   └── NotificationHelper.kt # Notification management
-│
-├── worker/
-│   └── CleanupWorker.kt      # Periodic cleanup tasks
-│
-├── di/                       # Dependency injection
-│   ├── AppModule.kt
-│   ├── NetworkModule.kt
-│   └── DatabaseModule.kt
-│
-└── util/
-    ├── FileUtils.kt          # File operations
-    ├── NetworkUtils.kt       # Network helpers
-    └── Extensions.kt         # Kotlin extensions
-```
-
-### Data Flow
-```
-UI Layer (Activities/Fragments)
-    ↕
-ViewModel (State Management)
-    ↕
-UseCase (Business Logic)
-    ↕
-Repository (Data Abstraction)
-    ↕
-Data Sources (Network + Local DB)
-    ↕
-Download Service (Background Operations)
+│   │   ├── navigation/                     AppNavHost, Destinations
+│   │   ├── screens/                        Home / Formats / Downloads / Settings
+│   │   ├── components/                     AppTopBar, VideoInfoCard, EmptyState, …
+│   │   └── theme/                          Material 3 colour scheme + typography
+│   ├── viewmodel/                          one AndroidViewModel per screen
+│   ├── data/
+│   │   ├── model/Models.kt                 VideoInfo, FormatOptions, MediaSelection, …
+│   │   ├── local/                          Room: AppDatabase, DownloadDao, DownloadEntity
+│   │   ├── DownloadRepository.kt           single source of truth
+│   │   ├── PythonDownloader.kt             Chaquopy ⇄ Kotlin bridge
+│   │   ├── SettingsStore.kt                DataStore preferences
+│   │   └── service/                        DownloadService, NotificationHelper
+│   └── util/                               FormatSpec, StoragePaths, Permissions,
+│                                           FileActions, Format (byte/time helpers)
+├── python/video_downloader.py              get_video_info · probe_formats · download
+└── res/                                    strings, themes, file_paths, icons
 ```
 
 ---
 
-## Getting Started
+## Tech stack
 
-### Prerequisites
-- Android Studio Hedgehog (2023.1.1) or newer
-- JDK 11 or higher
-- Android SDK (API 24+)
-- Kotlin 1.9+
-
-### Installation
-
-1. **Clone the repository**
-```bash
-git clone https://github.com/Chinmay-tayade/Youtube-Video-Downloader.git
-cd Youtube-Video-Downloader
-```
-
-2. **Open in Android Studio**
-   - Launch Android Studio
-   - File > Open
-   - Select the project directory
-
-3. **Sync Gradle**
-   - Wait for Gradle to download dependencies
-
-4. **Build the project**
-```bash
-./gradlew build
-```
-
-5. **Run the application**
-   - Connect an Android device or start emulator
-   - Run > Run 'app'
+| Area          | Choice |
+|---------------|--------|
+| Language      | Kotlin 1.9, Coroutines + Flow |
+| UI            | Jetpack Compose (BOM 2024.06), Material 3, Navigation Compose 2.7 |
+| Architecture  | MVVM, single Activity, `AndroidViewModel` + repository, unidirectional state |
+| Persistence   | Room 2.6 (KSP), DataStore Preferences (settings) |
+| Background    | Foreground `LifecycleService` + `NotificationCompat` |
+| Download core | current `yt-dlp` via Chaquopy 15 / embedded Python 3.12 |
+| Images        | Coil |
+| Build tools   | AGP 8.5, Gradle 8.7, KSP, JDK 17 |
+| Min / target  | SDK 24 (Android 7) / SDK 34 (Android 14) |
 
 ---
 
-## Permissions
+## Design decisions & trade-offs
 
-The app requires the following Android permissions:
-
-```xml
-<!-- Internet access for downloading -->
-<uses-permission android:name="android.permission.INTERNET" />
-
-<!-- Storage access for saving files -->
-<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-
-<!-- Foreground service for background downloads -->
-<uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-
-<!-- Network state for connectivity checks -->
-<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-```
+| Decision | Why | Trade-off |
+|----------|-----|-----------|
+| **Repository owns the service, screens own nothing** | One source of truth; a screen can be destroyed and re-created mid-download with zero state loss. | One process-singleton to reason about. |
+| **Foreground service, not `WorkManager`** | The job is user-initiated, needs a live progress UI *now*, and must not be deferred by Doze. | We manage the queue and lifecycle ourselves. |
+| **No ffmpeg** | `FFmpegKit` is retired and pulled from Maven Central; a static binary adds ~30 MB and licensing weight. | 1080p+/4K need a merge, so only progressive heights are offered; "audio only" can fall back to a small muxed file. |
+| **`yt-dlp` selector strings, not exact format IDs** | IDs change per request and per client; selectors like `best[height<=720]…/best/worst` degrade gracefully. | Slightly less precise than pinning an itag. |
+| **Chaquopy / embedded Python** | `yt-dlp` is the only extractor that keeps up with YouTube; re-implementing it in Kotlin is not realistic. | ~40 MB Python runtime in the APK; must track Python/`yt-dlp` versions. |
+| **`process=False` for the metadata probe** | Avoids yt-dlp running format selection (and failing on the missing merge) just to read titles/formats. | Relies on the extractor populating `formats` before processing (it does for YouTube). |
+| **Manual DI (Application-scoped singletons)** | Keeps the module graph obvious for a small app; no extra annotation processor. | Would move to Hilt as the surface grows. |
 
 ---
 
-## Usage
+## Known limitations
 
-### Basic Download Flow
-
-1. **Enter or paste video URL**
-2. **Fetch video information** (title, thumbnail, formats)
-3. **Select quality and format**
-4. **Choose download location**
-5. **Start download**
-6. **Monitor progress** via notification
-7. **Access downloaded file** in library
-
-### Advanced Features
-
-**Batch Downloads**
-```kotlin
-// Queue multiple videos
-downloadManager.addToQueue(listOf(url1, url2, url3))
-```
-
-**Custom Download Location**
-```kotlin
-// Select custom storage location
-val customPath = "/storage/emulated/0/MyVideos"
-downloadManager.setDownloadPath(customPath)
-```
-
-**Download with Specific Quality**
-```kotlin
-// Download specific quality
-downloadManager.download(url, quality = VideoQuality.HD_1080P)
-```
+- **YouTube ≥ 1080p / true MP3** need an ffmpeg merge/transcode — out of scope (see roadmap).
+- **Standalone audio** is increasingly gated behind an attestation token; from
+  data-centre IPs (incl. the Android emulator) the app falls back to the muxed
+  progressive stream, so an "audio" download can arrive as a small `.mp4`.
+- **Playlists** download only the first entry.
+- `MANAGE_EXTERNAL_STORAGE` is used so `yt-dlp` can write to an arbitrary
+  user-picked folder via a real path; a Play-Store build would switch to
+  `MediaStore` + a fixed app directory.
 
 ---
 
 ## Building
 
-### Debug Build
+Requires **JDK 17** and a local **Python 3.12** on `PATH` — Chaquopy uses it to
+resolve the `yt-dlp` wheel (`Requires-Python >=3.10`). On macOS:
+`brew install python@3.12`. Recent Android Studio ships a compatible JDK.
+
 ```bash
-./gradlew assembleDebug
+./gradlew :app:assembleDebug        # debug APK
+./gradlew :app:assembleRelease      # R8 + resource shrinking (keep rules in proguard-rules.pro)
+./gradlew :app:testDebugUnitTest    # unit tests
+./gradlew :app:lintDebug            # Android lint
+./gradlew :app:installDebug         # build + install on a connected device/emulator
 ```
 
-### Release Build
-```bash
-./gradlew assembleRelease
-```
-
-### Build Variants
-- `debug` - Debug build with logging
-- `release` - Optimized release build
-- `benchmark` - Build for performance testing
+The first build downloads the Python 3.12 runtime and the current `yt-dlp`
+wheel via Chaquopy, so it takes a few minutes.
 
 ---
 
 ## Testing
 
-### Unit Tests
+Pure logic is unit-tested off-device (`app/src/test`):
+
+- **`FormatSpecTest`** — every `MediaSelection` → the expected yt-dlp selector,
+  including the height cap and the progressive fallback.
+- **`FormatUtilTest`** — `formatBytes` / `formatDuration` / `formatCountAbbreviated`
+  / `formatSpeed`, plus framework-free URL parsing (`hostOf`, `isYouTubeUrl`) for
+  `youtu.be`, `m.` / `music.` hosts, and userinfo/port URLs.
+
 ```bash
-./gradlew test
+./gradlew :app:testDebugUnitTest
 ```
 
-### Instrumentation Tests
-```bash
-./gradlew connectedAndroidTest
-```
-
-### Test Coverage
-```bash
-./gradlew createDebugCoverageReport
-```
+Verified end-to-end on a Pixel 9a emulator (API 34): fetch → 360p video download
+and audio-fallback download both complete, appear in the library, and open in the
+system player; foreground notification, cancel, share-intake and back navigation
+all behave.
 
 ---
 
-## Performance Optimization
+## Permissions
 
-### Download Speed
-- Parallel connection support
-- Resume capability for interrupted downloads
-- Smart chunk-based downloading
-- Connection pooling with OkHttp
-
-### Memory Management
-- Efficient buffer management
-- Stream-based file writing
-- Automatic resource cleanup
-- Memory leak prevention
-
-### Battery Optimization
-- Intelligent batching
-- WiFi-only download option
-- Battery-aware scheduling
-- Foreground service optimization
-
----
-
-## Code Quality
-
-### Static Analysis
-```bash
-# Android Lint
-./gradlew lint
-
-# Kotlin lint
-./gradlew ktlintCheck
-
-# Detekt
-./gradlew detekt
-```
-
-### Code Formatting
-```bash
-./gradlew ktlintFormat
-```
-
----
-
-## Contributing
-
-Contributions are welcome! Please follow these guidelines:
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/NewFeature`)
-3. Write tests for new functionality
-4. Ensure code passes all checks
-5. Commit with clear messages (`git commit -m 'Add NewFeature'`)
-6. Push to branch (`git push origin feature/NewFeature`)
-7. Open a Pull Request
+| Permission | Why |
+|------------|-----|
+| `INTERNET`, `ACCESS_NETWORK_STATE` | download |
+| `POST_NOTIFICATIONS` (13+) | progress + result notifications |
+| `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_DATA_SYNC` | background downloads (typed FGS on API 34) |
+| `MANAGE_EXTERNAL_STORAGE` | `yt-dlp` writes through a plain filesystem path, so the app needs write access to the folder the user picks |
 
 ---
 
 ## Roadmap
 
-- [ ] Playlist download support
-- [ ] Video format conversion
-- [ ] Built-in subtitle downloader
-- [ ] Channel subscription for auto-downloads
-- [ ] Advanced filtering options
-- [ ] Cloud backup integration
-- [ ] Multi-language support
-- [ ] Picture-in-Picture mode
-- [ ] Chromecast support
+- [ ] Bundle `ffmpeg` for 1080p / 4K merge and true MP3 extraction
+- [ ] Playlist / batch downloads
+- [ ] Subtitle download
+- [ ] Configurable parallel downloads
+- [ ] Picture-in-Picture playback of finished files
+- [ ] Hilt + a `:core` / `:feature` module split
 
 ---
 
-## Legal Notice
+## Legal
 
-This application is for educational purposes only. Users are responsible for ensuring they have the right to download any content. Respect copyright laws and terms of service of content platforms.
-
----
+For personal use only. You are responsible for complying with copyright law and
+the terms of service of the sites you download from.
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
----
+MIT — see [LICENSE](LICENSE).
 
 ## Author
 
-**Chinmay Tayade**
-
-- GitHub: [@Chinmay-tayade](https://github.com/Chinmay-tayade)
-- LinkedIn: [chinmaytayade](https://linkedin.com/in/chinmaytayade)
-- Email: chinmaytayade@outlook.com
-
----
-
-## Acknowledgments
-
-- Android development community for resources
-- OkHttp team for robust networking library
-- Kotlin team for excellent coroutines support
-- All open-source contributors
-
----
-
-<div align="center">
-
-**Built with Kotlin and Coroutines**
-
-Made by Chinmay Tayade
-
-</div>
+**Chinmay Tayade** · [@Chinmay-tayade](https://github.com/Chinmay-tayade)
